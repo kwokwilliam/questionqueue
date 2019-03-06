@@ -1,8 +1,8 @@
 package context
 
 import (
-	"questionqueue/db"
-	"questionqueue/trie"
+	"questionqueue/servers/db"
+	"questionqueue/servers/trie"
 )
 
 type Context struct {

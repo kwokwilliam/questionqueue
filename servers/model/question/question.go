@@ -2,7 +2,7 @@ package model
 
 import (
 	"errors"
-	"questionqueue/model/class"
+	"questionqueue/servers/modelrs/model/class"
 	"time"
 )
 

@@ -1,6 +1,6 @@
 package model
 
-import "questionqueue/model/question"
+import "questionqueue/servers/modelrs/model/question"
 
 type AdminQueue struct {
 	Value []model.Question
