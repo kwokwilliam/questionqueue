@@ -1,9 +1,6 @@
 package main
 
 import (
-	"assignments-kwokwilliam/servers/gateway/handlers"
-	"assignments-kwokwilliam/servers/gateway/models/users"
-	"assignments-kwokwilliam/servers/gateway/sessions"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +8,9 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"questionqueue/servers/gateway/handlers"
+	"questionqueue/servers/gateway/models/users"
+	"questionqueue/servers/gateway/sessions"
 	"strings"
 	"sync"
 	"sync/atomic"
