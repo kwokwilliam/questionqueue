@@ -136,7 +136,6 @@ The client will send this to the server to create a new account:
 }
 ```
 
-
 **Questions**
 
 `questions`: Questions will be represented in the database as follows. This is the model that will returned when a client requests, creates, or updates any question. 
