@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"assignments-kwokwilliam/servers/gateway/indexes"
-	"assignments-kwokwilliam/servers/gateway/models/users"
-	"assignments-kwokwilliam/servers/gateway/sessions"
 	"errors"
+	"questionqueue/servers/gateway/indexes"
+	"questionqueue/servers/gateway/models/users"
+	"questionqueue/servers/gateway/sessions"
 )
 
 // HandlerContext is a struct that will be a receiver on any

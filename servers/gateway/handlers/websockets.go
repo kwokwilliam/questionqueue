@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"assignments-kwokwilliam/servers/gateway/sessions"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"questionqueue/servers/gateway/sessions"
 	"sync"
 
 	"github.com/gorilla/websocket"

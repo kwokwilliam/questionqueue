@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"assignments-kwokwilliam/servers/gateway/models/users"
+	"questionqueue/servers/gateway/models/users"
 	"time"
 )
 

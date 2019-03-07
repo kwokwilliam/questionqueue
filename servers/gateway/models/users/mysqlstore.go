@@ -1,11 +1,11 @@
 package users
 
 import (
-	"assignments-kwokwilliam/servers/gateway/indexes"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
 	"errors"
+	"questionqueue/servers/gateway/indexes"
 	"time"
 
 	"github.com/go-sql-driver/mysql"

@@ -1,15 +1,14 @@
 package handlers
 
 import (
-	"assignments-kwokwilliam/servers/gateway/models/users"
-	"assignments-kwokwilliam/servers/gateway/sessions"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/smtp"
 	"os"
 	"path/filepath"
+	"questionqueue/servers/gateway/models/users"
+	"questionqueue/servers/gateway/sessions"
 	"strconv"
 	"strings"
 	"time"
@@ -411,101 +410,5 @@ func (ctx *HandlerContext) ProfilePhotoHandler(w http.ResponseWriter, r *http.Re
 
 	// If not GET or PUT, return an error
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	return
-}
-
-// ResetCodesHandler is the handler for resetting codes
-func (ctx *HandlerContext) ResetCodesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// decode json in body
-	creds := &users.Credentials{}
-	jsonDecoder := json.NewDecoder(r.Body)
-	if err := jsonDecoder.Decode(creds); err != nil {
-		http.Error(w, "Internal server error - Unable to decode JSON", http.StatusInternalServerError)
-		return
-	}
-
-	// set reset code
-	resetCode, err := ctx.userStore.SetResetCode(creds.Email)
-	if err != nil {
-		http.Error(w, "Unable to reset code. Email may not exist.", http.StatusNotFound)
-		return
-	}
-
-	// Send email, currently uses my email until I figure out how to send via the server.
-	auth := smtp.PlainAuth("", ctx.accessKey, ctx.secretKey, "email-smtp.us-west-2.amazonaws.com")
-	to := []string{creds.Email}
-	msg := []byte("To: " + creds.Email + "\r\n" +
-		"Subject: Password Reset Confirmation Code\r\n" +
-		"\r\n" +
-		"This is your reset code: " + resetCode + "\r\n")
-	err = smtp.SendMail("email-smtp.us-west-2.amazonaws.com:25", auth, "mockingod@gmail.com", to, msg)
-	if err != nil {
-		http.Error(w, "Unable to generate reset code", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Confirmation code sent to email"))
-	return
-}
-
-// ResetPassword handles the password reset
-func (ctx *HandlerContext) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PUT" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Grab email and check database for it.
-	email := mux.Vars(r)["email"]
-	resetCode, resetTime, err := ctx.userStore.GetResetCodeByEmail(email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// decode json in body
-	resetData := &users.UserResetPass{}
-	jsonDecoder := json.NewDecoder(r.Body)
-	if err := jsonDecoder.Decode(resetData); err != nil {
-		http.Error(w, "Internal server error - Unable to decode JSON", http.StatusInternalServerError)
-		return
-	}
-
-	// check matching reset codes, time is valid, and passwords match
-	if resetCode != resetData.ResetCode {
-		http.Error(w, "Invalid reset code", http.StatusBadRequest)
-		return
-	}
-	if time.Since(resetTime).Minutes() > 5 {
-		http.Error(w, "Reset code expired", http.StatusBadRequest)
-		return
-	}
-	if resetData.Password != resetData.PasswordConf {
-		http.Error(w, "Passwords do not match", http.StatusBadRequest)
-		return
-	}
-
-	// Create new password hash (a lot easier to do this than call the object itself)
-	passHash, err := bcrypt.GenerateFromPassword([]byte(resetData.Password), bcrypt.MinCost)
-	if err != nil {
-		http.Error(w, "Password could not be saved", http.StatusInternalServerError)
-		return
-	}
-
-	if err = ctx.userStore.UpdatePassword(email, passHash); err != nil {
-		http.Error(w, "Error saving password", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Password updated"))
 	return
 }

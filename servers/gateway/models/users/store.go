@@ -1,8 +1,8 @@
 package users
 
 import (
-	"assignments-kwokwilliam/servers/gateway/indexes"
 	"errors"
+	"questionqueue/servers/gateway/indexes"
 	"time"
 )
 
