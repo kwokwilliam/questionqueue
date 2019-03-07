@@ -46,36 +46,36 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 `/v1/class`: class control
 * `GET`: Get all classes.
   * `200`; `application/json`: Successfully retrieves all classes; returns the encoded list in the body.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 * `POST`; `application/json`: Create new class.
   * `201`; `application/json`: Successfully creates a new class; returns encoded class in the body.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 * `PATCH`; `application/json`: Update question types of a class; overwrites current types.
   * `201`; `application/json`: Successfully updates a class; returns updated, encoded class information in the body.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 
-`/v1/admin`: TA/teacher control
+`/v1/teacher`: TA/teacher control
 * `GET`: Get TA/teacher information.
   * `200`; `application/json`: Successfully retrieves TA/teacher information; returns encoded user model in the body.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 * `POST`; `application/json`: Create new TA/teacher.
   * `201`; `application/json`: Successfully creates a new TA/teacher; returns encoded user model in the body.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 * `PATCH`; `application/json`: Update password for a TA/teacher.
   * `200`: Successfully updates password for the user.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 
-`/v1/admin/login`: TA/teacher session control
+`/v1/teacher/login`: TA/teacher session control
 * `POST`: Log in TA/teacher and returns session cookie.
   * `200`; `application/json`: Successfully logs in a TA/teacher; returns session ID in `Set-Cookie` header (?).
   * `401`: Cannot authenticate the provided credentials.
@@ -83,10 +83,10 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `500`: Internal server error.
 * `DELETE`: Log out a TA/teacher.
   * `200`: Successfully logs out a TA/teacher.
-  * `401`: Cannot verify _admin_ session ID or no _admin_ session ID is provided.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 
-`/v1/queue`: websocket connection to notify users and admins of the current queue.
+`/v1/queue`: websocket connection to notify users and teachers of the current queue.
 * If the user connected with an auth token, we can assume the user is a teacher of a class, so when we emit the entire queue list to it and do so for subsequent users entering or leaving.
 * If no auth token is provided, we only give them the user hashes of people in line.
 
@@ -96,7 +96,7 @@ We will be utilizing MongoDB as our persistent data store.
 
 **Users**
  
-`admin`: Users will be represented in the database as follows. This is the model that will returned when a client requests, creates, or updates any user. 
+`teacher`: Users will be represented in the database as follows. This is the model that will returned when a client requests, creates, or updates any user. 
 ```
 {
   "id": "id_value",
@@ -156,7 +156,9 @@ We will be utilizing MongoDB as our persistent data store.
 
 **Queue**
 
-`queue`: This is the model that is returned when a client (student) requests information about the queue.
+The main design decision here is that we would like to obfuscate the contents of the queue to regular students. In the future, we can explore non-obfuscation in order to provide a more collaborative queue environment, but for a minimum viable product we will create a basic system where students don't know who else is in line.
+
+`queue`: (FOR STUDENTS) This is the model that is returned when a client (student) requests information about the queue.
 ```
 {
   "queue": [
@@ -167,7 +169,7 @@ We will be utilizing MongoDB as our persistent data store.
 }
 ```
 
-`queue`: This is the model that an admin sees:
+`queue`: (FOR TEACHERS) This is the model that an teacher sees:
 ```
 {
   "queue": [
