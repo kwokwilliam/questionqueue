@@ -69,8 +69,8 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
-* `PATCH`; `application/json`: Update password for a TA/teacher.
-  * `200`: Successfully updates password for the user.
+* `PATCH`; `application/json`: Update information for a TA/teacher.
+  * `200`: Successfully updates information for the user.
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
@@ -112,16 +112,6 @@ We will be utilizing MongoDB as our persistent data store.
 {
   "email": "email",
   "password": "raw_password"
-}
-```
-
-`credential_update`: This is the model when a TA/teacher needs to change their login credentials.
-```
-{
- "email": "email",
- "old_password": "old_password",
- "new_password": "new_password",
- "new_password_conf": "new_password_conf"
 }
 ```
 
