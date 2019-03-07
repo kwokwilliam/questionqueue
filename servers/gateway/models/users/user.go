@@ -36,17 +36,15 @@ type Credentials struct {
 type NewUser struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
-	PasswordConf string `json:"passwordConf"`
-	UserName     string `json:"userName"`
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
+	PasswordConf string `json:"password_conf"`
+	FirstName    string `json:"firstname"`
+	LastName     string `json:"lastname"`
 }
 
 //Updates represents allowed updates to a user profile
 type Updates struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
-	PhotoURL  string `json:"photourl"`
 }
 
 // UserResetPass is used during a user's password reset
