@@ -50,12 +50,11 @@ func (ms *MySQLStore) LoadUsersToTrie(trie *indexes.Trie) error {
 		user := &User{}
 		if err := rows.Scan(
 			&user.ID,
-			&user.UserName,
 			&user.FirstName,
 			&user.LastName); err != nil {
 			return err
 		}
-		trie.AddUserToTrie(user.UserName, user.FirstName, user.LastName, user.ID)
+		trie.AddUserToTrie(user.FirstName, user.LastName, user.ID)
 	}
 	return nil
 }
@@ -82,10 +81,8 @@ func (ms *MySQLStore) getByProvidedType(t GetByType, arg interface{}) (*User, er
 		&user.ID,
 		&user.Email,
 		&user.PassHash,
-		&user.UserName,
 		&user.FirstName,
-		&user.LastName,
-		&user.PhotoURL); err != nil {
+		&user.LastName); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -110,8 +107,8 @@ func (ms *MySQLStore) GetByUserName(username string) (*User, error) {
 //the newly-inserted User, complete with the DBMS-assigned ID
 func (ms *MySQLStore) Insert(user *User) (*User, error) {
 	ins := "insert into Users(Email, PassHash, UserName, FirstName, LastName, PhotoURL) values (?,?,?,?,?,?)"
-	res, err := ms.Database.Exec(ins, user.Email, user.PassHash, user.UserName,
-		user.FirstName, user.LastName, user.PhotoURL)
+	res, err := ms.Database.Exec(ins, user.Email, user.PassHash,
+		user.FirstName, user.LastName)
 	if err != nil {
 		return nil, err
 	}
@@ -146,26 +143,6 @@ func (ms *MySQLStore) Update(id int64, updates *Updates) (*User, error) {
 		return nil, err
 	}
 
-	rowsAffected, rowsAffectedErr := res.RowsAffected()
-	if rowsAffectedErr != nil {
-		return nil, rowsAffectedErr
-	}
-
-	if rowsAffected != 1 {
-		return nil, ErrUserNotFound
-	}
-
-	// Get the user using GetByID
-	return ms.GetByID(id)
-}
-
-// UpdateImage will update the image for the user
-func (ms *MySQLStore) UpdateImage(id int64, updates *Updates) (*User, error) {
-	upd := "update Users set PhotoURL = ? where ID = ?"
-	res, err := ms.Database.Exec(upd, updates.PhotoURL, id)
-	if err != nil {
-		return nil, err
-	}
 	rowsAffected, rowsAffectedErr := res.RowsAffected()
 	if rowsAffectedErr != nil {
 		return nil, rowsAffectedErr
@@ -304,10 +281,8 @@ func (ms *MySQLStore) GetMultipleUsersByID(uids []int64) ([]*User, error) {
 		user := &User{}
 		if err := rows.Scan(
 			&user.ID,
-			&user.UserName,
 			&user.FirstName,
-			&user.LastName,
-			&user.PhotoURL); err != nil {
+			&user.LastName); err != nil {
 			return nil, err
 		}
 		retUsers = append(retUsers, user)

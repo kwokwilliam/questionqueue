@@ -3,7 +3,6 @@ package users
 import (
 	"errors"
 	"questionqueue/servers/gateway/indexes"
-	"time"
 )
 
 //ErrUserNotFound is returned when the user can't be found
@@ -34,18 +33,6 @@ type Store interface {
 	// InsertSignIn inserts a sign in instance to the database and
 	// returns any errors that occur.
 	InsertSignIn(userID int64, clientIP string) error
-
-	// UpdateImage updates the user's avatar
-	UpdateImage(id int64, updates *Updates) (*User, error)
-
-	// SetResetCode will set the reset code for the person with the specified email.
-	SetResetCode(email string) (string, error)
-
-	// UpdatePassword updates the user's password
-	UpdatePassword(email string, passHash []byte) error
-
-	// GetResetCodeByEmail will get the user's reset code and time with the provided email
-	GetResetCodeByEmail(email string) (string, time.Time, error)
 
 	// LoadUsersToTrie loads all users in the db to the trie
 	LoadUsersToTrie(trie *indexes.Trie) error

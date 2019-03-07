@@ -306,7 +306,7 @@ func TestIRL(t *testing.T) {
 	if trie.Len() != 4 {
 		t.Errorf("error 2")
 	}
-	trie.AddUserToTrie("user2", "name", "name12", 2)
+	trie.AddUserToTrie("name", "name12", 2)
 	if trie.Len() != 6 {
 		t.Errorf("error 3")
 	}

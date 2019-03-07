@@ -1,8 +1,6 @@
 package users
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"net/mail"
 	"strings"
@@ -69,10 +67,6 @@ func (nu *NewUser) Validate() error {
 		return fmt.Errorf("Password and confirmation must match")
 	}
 
-	if len(nu.UserName) == 0 || strings.Contains(nu.UserName, " ") {
-		return fmt.Errorf("UserName must be non-zero length and may not contain spaces")
-	}
-
 	return nil
 }
 
@@ -86,7 +80,6 @@ func (nu *NewUser) ToUser() (*User, error) {
 
 	newUser := &User{
 		Email:     nu.Email,
-		UserName:  nu.UserName,
 		FirstName: nu.FirstName,
 		LastName:  nu.LastName,
 	}
@@ -96,16 +89,7 @@ func (nu *NewUser) ToUser() (*User, error) {
 		return nil, passwordHashErr
 	}
 
-	GetGravitar(newUser, nu.Email)
 	return newUser, nil
-}
-
-// GetGravitar calculates the gravitar hash based on the string given and
-// stores it for the user
-func GetGravitar(user *User, str string) {
-	photoURLHash := md5.Sum([]byte(strings.ToLower(strings.TrimSpace(str))))
-	photoURLHashString := hex.EncodeToString(photoURLHash[:])
-	user.PhotoURL = gravatarBasePhotoURL + photoURLHashString
 }
 
 //FullName returns the user's full name, in the form:
@@ -158,10 +142,6 @@ func (u *User) ApplyUpdates(updates *Updates) error {
 
 	if updates.LastName != "" {
 		u.LastName = updates.LastName
-	}
-
-	if updates.PhotoURL != "" {
-		u.PhotoURL = updates.PhotoURL
 	}
 
 	return nil

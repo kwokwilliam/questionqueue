@@ -138,8 +138,7 @@ func (t *Trie) Remove(key string, value int64) {
 }
 
 // AddUserToTrie adds a user to the trie
-func (t *Trie) AddUserToTrie(username, firstname, lastname string, id int64) {
-	t.addSplitToTrie(username, id)
+func (t *Trie) AddUserToTrie(firstname, lastname string, id int64) {
 	t.addSplitToTrie(firstname, id)
 	t.addSplitToTrie(lastname, id)
 }
