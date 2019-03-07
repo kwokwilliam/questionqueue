@@ -22,10 +22,8 @@ type User struct {
 	ID        int64  `json:"id"`
 	Email     string `json:"-"` //never JSON encoded/decoded
 	PassHash  []byte `json:"-"` //never JSON encoded/decoded
-	UserName  string `json:"userName"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	PhotoURL  string `json:"photoURL"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
 }
 
 //Credentials represents user sign-in credentials
