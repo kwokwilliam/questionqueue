@@ -85,8 +85,6 @@ func main() {
 	sessionKey := getENVOrExit("SESSIONKEY")
 	redisAddr := getENVOrExit("REDISADDR")
 	dsn := getENVOrExit("DSN")
-	accessKey := getENVOrExit("AWSACCESS")
-	secretKey := getENVOrExit("AWSSECRET")
 	messagesAddrs := getENVOrExit("MESSAGESADDR")
 	summaryAddrs := getENVOrExit("SUMMARYADDR")
 	rabbitAddr := getENVOrExit("RABBITADDR")

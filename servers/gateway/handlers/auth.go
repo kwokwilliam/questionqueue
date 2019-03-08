@@ -3,10 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"questionqueue/servers/gateway/models/users"
 	"questionqueue/servers/gateway/sessions"
 	"strconv"
@@ -69,7 +66,7 @@ func (ctx *HandlerContext) UsersHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Add user to trie
-		ctx.trie.AddUserToTrie(newUserAsUser.UserName, newUserAsUser.FirstName, newUserAsUser.LastName, newUserAsUser.ID)
+		ctx.trie.AddUserToTrie(newUserAsUser.FirstName, newUserAsUser.LastName, newUserAsUser.ID)
 
 		// Create a new session for the user
 		sessionState := NewSessionState(time.Now(), newUserAsUser)
@@ -211,7 +208,7 @@ func (ctx *HandlerContext) SpecificUsersHandler(w http.ResponseWriter, r *http.R
 
 		// update user in trie
 		ctx.trie.RemoveNamesInTrie(oldFirstName, oldLastName, sessionState.User.ID)
-		ctx.trie.AddUserToTrie(updatedUser.UserName, updatedUser.FirstName, updatedUser.LastName, sessionState.User.ID)
+		ctx.trie.AddUserToTrie(updatedUser.FirstName, updatedUser.LastName, sessionState.User.ID)
 
 		// write user to response body
 		err = writeUserToResponse(w, http.StatusCreated, updatedUser)
@@ -323,92 +320,5 @@ func (ctx *HandlerContext) SpecificSessionHandler(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("signed out"))
-	return
-}
-
-// ProfilePhotoHandler handles the requests related to
-func (ctx *HandlerContext) ProfilePhotoHandler(w http.ResponseWriter, r *http.Request) {
-	sessionState := &SessionState{}
-
-	// Getting state should validate session id
-	_, err := sessions.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
-	if err != nil {
-		http.Error(w, "Unauthorized Request", http.StatusUnauthorized)
-		return
-	}
-	var reqIDNum int64
-	reqIDStr := mux.Vars(r)["uid"]
-	if reqIDStr == "me" {
-		reqIDNum = sessionState.User.ID
-		reqIDStr = strconv.FormatInt(sessionState.User.ID, 10)
-	} else {
-		// Throw error if invalid ID provided
-		reqIDNum, err = strconv.ParseInt(reqIDStr, 10, 64)
-		if err != nil {
-			http.Error(w, "Invalid ID provided", http.StatusBadRequest)
-			return
-		}
-	}
-	fileName := "./avatars/" + reqIDStr + ".png"
-	if r.Method == "GET" {
-		if _, err := os.Stat(fileName); err == nil {
-			http.ServeFile(w, r, fileName)
-			return
-		}
-		http.Error(w, "Cannot find avatar", http.StatusNotFound)
-		return
-	}
-
-	if r.Method == "PUT" {
-		// Check that provided id is user
-		if reqIDNum != sessionState.User.ID {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
-		// Get file
-		r.ParseMultipartForm(32 << 20)
-		file, _, err := r.FormFile("uploadfile")
-		if err != nil {
-			http.Error(w, "Unable to parse file", http.StatusInternalServerError)
-			return
-		}
-		defer file.Close()
-
-		// Create avatar folder if it doesn't exist
-		avatarFolder := filepath.Join(".", "avatars")
-		if err = os.MkdirAll(avatarFolder, os.ModePerm); err != nil {
-			http.Error(w, "Unable to save file internally", http.StatusInternalServerError)
-			return
-		}
-
-		f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil {
-			http.Error(w, "Unable to save file", http.StatusInternalServerError)
-			return
-		}
-		defer f.Close()
-		io.Copy(f, file)
-
-		// Set user's new Photo URL
-		updates := &users.Updates{PhotoURL: "https://api.uwinfotutor.me/v1/users/" + reqIDStr + "/avatar"}
-		if err = sessionState.User.ApplyUpdates(updates); err != nil {
-			http.Error(w, "Unable to apply user updates", http.StatusInternalServerError)
-			return
-		}
-		if _, err := ctx.userStore.UpdateImage(reqIDNum, updates); err != nil {
-			fmt.Print(err)
-			http.Error(w, "Failure to save new avatar", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("Avatar updated"))
-		return
-	}
-
-	// If not GET or PUT, return an error
-	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	return
 }
