@@ -5,7 +5,7 @@ import (
 	"github.com/badoux/checkmail"
 )
 
-type Admin struct {
+type Teacher struct {
 	ID           int32  `json:"id"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
@@ -13,7 +13,7 @@ type Admin struct {
 	LastName     string `json:"last_name"`
 }
 
-type NewAdmin struct {
+type NewTeacher struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	PasswordConf string `json:"password_conf"`
@@ -21,7 +21,7 @@ type NewAdmin struct {
 	LastName     string `json:"last_name"`
 }
 
-func CreateNewAdmin(email, pw, pwConf, fn, ln string) (*NewAdmin, error) {
+func CreateNewTeacher(email, pw, pwConf, fn, ln string) (*NewTeacher, error) {
 
 	var (
 		ErrPasswordNotMatch = errors.New("passwords do not match")
@@ -44,7 +44,7 @@ func CreateNewAdmin(email, pw, pwConf, fn, ln string) (*NewAdmin, error) {
 		return nil, ErrEmptyName
 	}
 
-	return &NewAdmin{
+	return &NewTeacher{
 		Email:        email,
 		Password:     pw,
 		PasswordConf: pwConf,

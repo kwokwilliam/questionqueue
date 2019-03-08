@@ -2,7 +2,6 @@ package model
 
 import (
 	"errors"
-	"questionqueue/servers/modelrs/model/class"
 	"time"
 )
 
@@ -43,7 +42,7 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 		return nil, ErrEmptyQuestion
 	}
 
-	if !model.ValidateClass(class) {
+	if !ValidateClass(class) {
 		return nil, ErrInvalidClass
 	}
 
@@ -68,10 +67,10 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 		X:           x,
 		Y:           y,
 		CreatedAt:   time.Now(),
-		ResolvedAt:  nil,
+		ResolvedAt:  time.Time{},
 	}, nil
 }
 
 func QuestionResolved(q *Question) bool {
-	return q.ResolvedAt == nil
+	return q.ResolvedAt == time.Time{}
 }
