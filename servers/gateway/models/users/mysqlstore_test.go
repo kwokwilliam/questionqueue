@@ -115,9 +115,8 @@ func TestGetByID(t *testing.T) {
 
 		// Test if user matches the correct row
 		if !c.expectError && (user.ID != expectedRow.id || user.Email != expectedRow.email ||
-			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) || user.UserName != expectedRow.userName ||
-			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName ||
-			user.PhotoURL != expectedRow.photoURL) {
+			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) ||
+			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName) {
 			t.Errorf("Error, invalid match in test [%s]", c.name)
 		}
 
@@ -215,9 +214,8 @@ func TestGetByEmail(t *testing.T) {
 
 		// Test if user matches the correct row
 		if !c.expectError && (user.ID != expectedRow.id || user.Email != expectedRow.email ||
-			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) || user.UserName != expectedRow.userName ||
-			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName ||
-			user.PhotoURL != expectedRow.photoURL) {
+			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) ||
+			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName) {
 			t.Errorf("Error, invalid match in test [%s]", c.name)
 		}
 
@@ -315,9 +313,8 @@ func TestGetByUserName(t *testing.T) {
 
 		// Test if user matches the correct row
 		if !c.expectError && (user.ID != expectedRow.id || user.Email != expectedRow.email ||
-			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) || user.UserName != expectedRow.userName ||
-			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName ||
-			user.PhotoURL != expectedRow.photoURL) {
+			!reflect.DeepEqual(user.PassHash, expectedRow.passHash) ||
+			user.FirstName != expectedRow.firstName || user.LastName != expectedRow.lastName) {
 			t.Errorf("Error, invalid match in test [%s]", c.name)
 		}
 
@@ -347,10 +344,8 @@ func TestInsert(t *testing.T) {
 			User{
 				Email:     "test@test.com",
 				PassHash:  []byte("passhash"),
-				UserName:  "username",
 				FirstName: "firstname",
 				LastName:  "lastname",
-				PhotoURL:  "photourl",
 			},
 			1,
 			false,

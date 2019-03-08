@@ -20,7 +20,6 @@ func TestValidate(t *testing.T) {
 				"mail@newuser.com",
 				"password",
 				"password",
-				"Username",
 				"firstname",
 				"lastname",
 			},
@@ -32,7 +31,6 @@ func TestValidate(t *testing.T) {
 				"@@@newuser.com",
 				"password",
 				"password",
-				"Username",
 				"firstname",
 				"lastname",
 			},
@@ -44,7 +42,6 @@ func TestValidate(t *testing.T) {
 				"mail@newuser.com",
 				"password",
 				"password2",
-				"Username",
 				"firstname",
 				"lastname",
 			},
@@ -56,31 +53,6 @@ func TestValidate(t *testing.T) {
 				"mail@newuser.com",
 				"a",
 				"a",
-				"Username",
-				"firstname",
-				"lastname",
-			},
-			true,
-		},
-		{
-			"Username has spaces",
-			&NewUser{
-				"mail@newuser.com",
-				"password",
-				"password",
-				"    Username",
-				"firstname",
-				"lastname",
-			},
-			true,
-		},
-		{
-			"No username provided",
-			&NewUser{
-				"mail@newuser.com",
-				"password",
-				"password",
-				"",
 				"firstname",
 				"lastname",
 			},
@@ -155,7 +127,6 @@ func TestToUser(t *testing.T) {
 				"asdf@asdf.com",
 				"password",
 				"password",
-				"username",
 				"firstname",
 				"lastname",
 			},
@@ -167,7 +138,6 @@ func TestToUser(t *testing.T) {
 				"asdf@asdf.com",
 				"password",
 				"passwordconffail",
-				"username",
 				"firstname",
 				"lastname",
 			},
@@ -196,39 +166,6 @@ func TestToUser(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected error validation error but got %v", err)
 			}
-		}
-	}
-}
-
-func TestGetGravitar(t *testing.T) {
-	baseURL := "https://www.gravatar.com/avatar/"
-	cases := []struct {
-		name             string
-		input            string
-		outputHashString string
-	}{
-		{
-			"Simple case",
-			"MyEmailAddress@example.com",
-			"0bc83cb571cd1c50ba6f3e8a78ef1346",
-		},
-		{
-			"Space case",
-			" MyEmailAddress@example.com  ",
-			"0bc83cb571cd1c50ba6f3e8a78ef1346",
-		},
-		{
-			"Random case case",
-			"MYEMailAddRESS@eXAMple.com",
-			"0bc83cb571cd1c50ba6f3e8a78ef1346",
-		},
-	}
-
-	for _, c := range cases {
-		tempUser := &User{}
-		GetGravitar(tempUser, c.input)
-		if tempUser.PhotoURL != baseURL+c.outputHashString {
-			t.Errorf("Error, hash doesn't match expected output. Expected [%s] but got [%s]", baseURL+c.outputHashString, tempUser.PhotoURL)
 		}
 	}
 }

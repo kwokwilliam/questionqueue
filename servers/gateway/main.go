@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"questionqueue/servers/gateway/handlers"
@@ -85,8 +84,6 @@ func main() {
 	sessionKey := getENVOrExit("SESSIONKEY")
 	redisAddr := getENVOrExit("REDISADDR")
 	dsn := getENVOrExit("DSN")
-	messagesAddrs := getENVOrExit("MESSAGESADDR")
-	summaryAddrs := getENVOrExit("SUMMARYADDR")
 	rabbitAddr := getENVOrExit("RABBITADDR")
 	queueName := getENVOrExit("QUEUENAME")
 
@@ -125,10 +122,6 @@ func main() {
 		log.Fatalf("Error when setting up consumer: %s", err)
 	}
 
-	// Create URLs for proxies
-	messagesURLs := getURLs(messagesAddrs)
-	summaryURLs := getURLs(summaryAddrs)
-
 	// Create new redis and mysql store
 	client := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
@@ -154,24 +147,14 @@ func main() {
 	go ctx.Notifier.SendMessagesToWebsockets(slackQueueMessages)
 
 	// set up proxies
-	messagesProxy := &httputil.ReverseProxy{Director: CustomDirector(messagesURLs, ctx)}
-	summaryProxy := &httputil.ReverseProxy{Director: CustomDirector(summaryURLs, ctx)}
 
 	// Create new mux for web server and set routes
 	mux := mux.NewRouter()
 	mux.HandleFunc("/v1/users", ctx.UsersHandler)
 	mux.HandleFunc("/v1/users/{uid}", ctx.SpecificUsersHandler)
-	mux.HandleFunc("/v1/users/{uid}/avatar", ctx.ProfilePhotoHandler)
 	mux.HandleFunc("/v1/sessions", ctx.SessionsHandler)
 	mux.HandleFunc("/v1/sessions/{uid}", ctx.SpecificSessionHandler)
-	mux.HandleFunc("/v1/resetcodes", ctx.ResetCodesHandler)
-	mux.HandleFunc("/v1/passwords/{email}", ctx.ResetPassword)
 	mux.HandleFunc("/v1/ws", ctx.WebSocketConnectionHandler)
-	mux.Handle("/v1/channels", messagesProxy)
-	mux.Handle("/v1/channels/{channelID}", messagesProxy)
-	mux.Handle("/v1/channels/{channelID}/members", messagesProxy)
-	mux.Handle("/v1/messages/{messageID}", messagesProxy)
-	mux.Handle("/v1/summary", summaryProxy)
 
 	// Wrap mux with CORS handler
 	wrappedMux := handlers.NewCORS(mux)
