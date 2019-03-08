@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -10,19 +9,20 @@ import (
 	"log"
 	"questionqueue/src/model"
 	"sync"
+	"time"
 )
 
 const (
-	dbName = "question_queue"
-	collClass = "class"
-	collTeacher = "teacher"
+	dbName       = "question_queue"
+	collClass    = "class"
+	collTeacher  = "teacher"
 	collQuestion = "question"
 )
 
 // MongoStore wraps the client to MongoDB with a struct.
 type MongoStore struct {
-	Client	*mongo.Client
-	lock	sync.Mutex
+	Client *mongo.Client
+	lock   sync.Mutex
 }
 
 // NewMongoStore Establishes a persistent connection to MongoDB
@@ -37,7 +37,7 @@ func NewMongoStore(addr string) (*MongoStore, error) {
 		} else {
 			return &MongoStore{
 				Client: client,
-				lock: sync.Mutex{}}, nil
+				lock:   sync.Mutex{}}, nil
 		}
 	}
 }
@@ -47,81 +47,28 @@ func (ms *MongoStore) Disconnect() error {
 	return ms.Client.Disconnect(nil)
 }
 
-// getCollection returns a given collection in a given database.
-func (ms *MongoStore) getCollection(dbName, collName string) *mongo.Collection {
-	return ms.Client.Database(dbName).Collection(collName)
-}
-
-// GetAll returns all documents from a given collection in a given database
-func (ms *MongoStore) getAll(dbName, collName string) (*mongo.Cursor, error) {
-	return ms.getCollection(dbName, collName).Find(nil, map[string]string{}, nil)
-}
-
-// GetAllTeacher returns all teacher documents from MongoDB.
-func (ms *MongoStore) GetAllTeacher() ([]*model.Teacher, error) {
-	var teachers []*model.Teacher
-
-	cursor, err := ms.getAll(dbName, collTeacher)
-	if err != nil {
-		return nil, err
-	}
-
-	for cursor.Next(nil) {
-		teacher := model.Teacher{}
-		if err := cursor.Decode(&teacher);
-			err != nil {
-			log.Printf("cannot unmarshal class: %v", err)
-			continue
-		}
-
-		if teacher.NotEmpty() {
-			teachers = append(teachers, &teacher)
-		}
-	}
-
-	return teachers, nil
-}
-
-// GetAllQuestions returns all question documents from MongoDB.
-func (ms *MongoStore) GetAllQuestions() ([]*model.Question, error) {
-	var questions []*model.Question
-
-	cursor, err := ms.getAll(dbName, collQuestion)
-	if err != nil {
-		return nil, err
-	}
-
-	for cursor.Next(nil) {
-		question := model.Question{}
-		if err := cursor.Decode(&question);
-			err != nil {
-			log.Printf("cannot unmarshal class: %v", err)
-			continue
-		}
-
-		if question.Name != "" {
-			questions = append(questions, &question)
-		}
-	}
-
-	return questions, nil
-}
-
+/*
+Class
+*/
 
 // InsertClass adds a given `model.class` to MongoDB.
 func (ms *MongoStore) InsertClass(class *model.Class) (*mongo.InsertOneResult, error) {
-	return insert(ms.getCollection(dbName, collClass), class)
+	return insert(ms.GetCollection(dbName, collClass), class)
 }
 
 // FindClass returns a `model.Class` using a `model.Class.Code`.
 func (ms *MongoStore) GetOneClass(code string) (*model.Class, error) {
 
-	cursor, err := ms.getCollection(dbName, collClass).Find(nil, map[string]string{"Code": code}, nil)
+	cursor, err := ms.GetCollection(dbName, collClass).Find(nil, map[string]string{"Code": code}, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	class := scanClass(cursor)
+
+	// TODO: can this be done?
+	//var cls []*model.Class
+	//scanModel(cursor, model.Class{}, cls)
 
 	if len(class) != 1 {
 		return nil, errors.New(fmt.Sprintf("expect only 1 result, got %v results", len(class)))
@@ -132,68 +79,147 @@ func (ms *MongoStore) GetOneClass(code string) (*model.Class, error) {
 
 // GetAllClass returns all class documents from MongoDB.
 func (ms *MongoStore) GetAllClass() ([]*model.Class, error) {
-
 	cursor, err := ms.getAll(dbName, collClass)
 	if err != nil {
 		return nil, err
+	} else {
+		return scanClass(cursor), nil
 	}
-
-	return scanClass(cursor), nil
-}
-
-// ScanClass takes a `mongo.Cursor`, parses all classes and return a slice of class pointers
-func scanClass(cursor *mongo.Cursor) []*model.Class {
-
-	var classes []*model.Class
-
-	for cursor.Next(nil) {
-		class := model.Class{}
-		// TODO: maybe return error?
-		if err := cursor.Decode(&class);
-			err != nil {
-			log.Printf("cannot unmarshal class: %v", err)
-			continue
-		}
-
-		if class.Code != "" && len(class.Type) > 0{
-			classes = append(classes, &class)
-		}
-	}
-
-	return classes
 }
 
 // UpdateClass takes a `model.Class` to overwrite a current class with a new `model.Class`.
 // Only needs `model.Class.Code` property
 func (ms *MongoStore) UpdateClass(old, new *model.Class) (*mongo.UpdateResult, error) {
-	return update(ms.getCollection(dbName, collClass), map[string]string{"code" : old.Code}, new)
+	return update(ms.GetCollection(dbName, collClass), map[string]string{"code": old.Code}, new)
 }
 
 // UpdateClass takes a class code to overwrite a current class with a new `model.Class`.
 func (ms *MongoStore) UpdateClassByCode(code string, new *model.Class) (*mongo.UpdateResult, error) {
-	return update(ms.getCollection(dbName, collClass), map[string]string{"code" : code}, new)
+	return update(ms.GetCollection(dbName, collClass), map[string]string{"code": code}, new)
+}
+
+// ScanClass takes a `mongo.Cursor`, parses all classes and return a slice of class pointers
+func scanClass(cursor *mongo.Cursor) []*model.Class {
+	var class []*model.Class
+	for cursor.Next(nil) {
+		c := model.Class{}
+		// TODO: maybe return error?
+		if err := cursor.Decode(&c); err != nil {
+			log.Printf("cannot unmarshal class: %v", err)
+			continue
+		} else {
+			class = append(class, &c)
+		}
+	}
+	return class
+}
+
+/*
+Question
+*/
+
+// GetAllQuestions returns all question documents from MongoDB.
+func (ms *MongoStore) GetAllQuestions() ([]*model.Question, error) {
+	cursor, err := ms.getAll(dbName, collQuestion)
+	if err != nil {
+		return nil, err
+	} else {
+		return scanQuestion(cursor), nil
+	}
+}
+
+// GetActiveQuestions returns all questions that have not been solved
+// by querying uninitialized `resolved_at` properties.
+func (ms *MongoStore) GetActiveQuestions() ([]*model.Question, error) {
+	if cursor, err := ms.GetCollection(dbName, collQuestion).
+		Find(nil, bson.M{"resolvedat": bson.M{"$eq": time.Time{}}}, nil);
+		err != nil {
+		return nil, err
+	} else {
+		return scanQuestion(cursor), nil
+	}
 }
 
 // InsertClass adds a given `model.class` to MongoDB.
-func (ms *MongoStore) InsertQuestion(question model.Question) (*mongo.InsertOneResult, error) {
-	return insert(ms.getCollection(dbName, collQuestion), question)
+func (ms *MongoStore) InsertQuestion(question *model.Question) (*mongo.InsertOneResult, error) {
+	return insert(ms.GetCollection(dbName, collQuestion), question)
 }
 
-// SolveQuestion takes a question.ID and updates `question.resolvedAt` property to current time.
-func (ms *MongoStore) SolveQuestion(id interface{}) (*mongo.UpdateResult, error) {
-	b, _ := json.Marshal(id)
-
-	//coll := ms.getCollection(dbName, collQuestion)
-	//q, e := find(coll, map[string]interface{}{"_id": id})
-
-	// TODO: get current, parse and unmarshal, change `resolvedAt`, overwrite
-
-	return update(ms.getCollection(dbName, collClass), map[string]string{"_id" : string(b)}, nil)
+// SolveQuestion takes a `question.belongsTo` and updates `question.resolvedAt` property to current time.
+func (ms *MongoStore) SolveQuestion(belongsTo string) (*mongo.UpdateResult, error) {
+	return ms.GetCollection(dbName, collQuestion).
+		// use UpdateMany() instead of UpdateOne() since only one result should be matched
+		UpdateMany(nil,
+			bson.M{
+				"belongsto":  bson.M{"$eq": belongsTo},
+				"resolvedat": bson.M{"$eq": time.Time{}}},
+			bson.M{
+				"$set": bson.M{"resolvedat": time.Now()}},
+			options.Update().SetBypassDocumentValidation(false))
 }
+
+// ScanQuestion takes a `mongo.Cursor`, parses and return a slice of all classes found.
+func scanQuestion(cursor *mongo.Cursor) []*model.Question {
+	var question []*model.Question
+	for cursor.Next(nil) {
+		q := model.Question{}
+		// TODO: maybe return error?
+		if err := cursor.Decode(&q); err != nil {
+			log.Printf("cannot unmarshal class: %v", err)
+			continue
+		} else {
+			question = append(question, &q)
+		}
+	}
+	return question
+}
+
+/*
+Teacher
+*/
 
 // InsertTeacher adds a given `model.Teacher` to MongoDB.
-func (ms *MongoStore) InsertTeacher(teacher model.Teacher) (*mongo.InsertOneResult, error) {
-	return insert(ms.getCollection(dbName, collTeacher), teacher)
+func (ms *MongoStore) InsertTeacher(teacher model.NewTeacher) (*mongo.InsertOneResult, error) {
+	return insert(ms.GetCollection(dbName, collTeacher), teacher)
+}
+
+// GetAllTeacher returns all teacher documents from MongoDB.
+func (ms *MongoStore) GetAllTeacher() ([]*model.Teacher, error) {
+	cursor, err := ms.getAll(dbName, collTeacher)
+	if err != nil {
+		return nil, err
+	} else {
+		return scanTeacher(cursor), nil
+	}
+}
+
+// ScanTeacher takes a `mongo.Cursor`, parses and return a slice of all teachers found.
+func scanTeacher(cursor *mongo.Cursor) []*model.Teacher {
+	var teacher []*model.Teacher
+	for cursor.Next(nil) {
+		t := model.Teacher{}
+		if err := cursor.Decode(&t); err != nil {
+			log.Printf("cannot unmarshal class: %v", err)
+			continue
+		} else {
+			teacher = append(teacher, &t)
+		}
+	}
+	return teacher
+}
+
+/*
+Helper
+*/
+
+// GetCollection returns a given collection in a given database.
+func (ms *MongoStore) GetCollection(dbName, collName string) *mongo.Collection {
+	return ms.Client.Database(dbName).Collection(collName)
+}
+
+// GetAll returns all documents from a given collection in a given database
+func (ms *MongoStore) getAll(dbName, collName string) (*mongo.Cursor, error) {
+	return ms.GetCollection(dbName, collName).Find(nil, map[string]string{}, nil)
 }
 
 // Find takes a map filter and returns the pointer of the Cursor; A wrapper of the driver's `Find()`
@@ -210,5 +236,26 @@ func insert(coll *mongo.Collection, m interface{}) (*mongo.InsertOneResult, erro
 // Update overwrites current document by taking a target collection ptr,
 // a filter, and a new document to overwrite with
 func update(coll *mongo.Collection, old, new interface{}) (*mongo.UpdateResult, error) {
-	return coll.UpdateOne(nil, old, bson.M{"$set" : new}, options.Update().SetBypassDocumentValidation(false))
+	return coll.UpdateOne(nil, old, bson.M{"$set": new}, options.Update().SetBypassDocumentValidation(false))
 }
+
+//// TODO: refactor scanners
+//// TODO: can this be done?
+//func scanModel(cursor *mongo.Cursor, i interface{}, coll []interface{}) {
+//	for cursor.Next(nil) {
+//		if err := cursor.Decode(&i);
+//			err != nil {
+//			log.Printf("cannot unmarshal interface: %v", err)
+//			continue
+//		} else {
+//			coll = append(coll, i)
+//		}
+//		clear(i)
+//	}
+//}
+//
+//// Clears the values of a given interface
+//func clear(v interface{}) {
+//	p := reflect.ValueOf(v).Elem()
+//	p.Set(reflect.Zero(p.Type()))
+//}

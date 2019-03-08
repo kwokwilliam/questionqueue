@@ -6,7 +6,7 @@ import (
 )
 
 type Teacher struct {
-	ID           int32  `json:"id"`
+	ID           string `json:"id"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
 	FirstName    string `json:"first_name"`
@@ -19,10 +19,6 @@ type NewTeacher struct {
 	PasswordConf string `json:"password_conf"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
-}
-
-func (t *Teacher) NotEmpty() bool {
-	return t.ID > 0 && t.Email != "" && t.FirstName != "" && t.LastName != ""
 }
 
 func CreateNewTeacher(email, pw, pwConf, fn, ln string) (*NewTeacher, error) {

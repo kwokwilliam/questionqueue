@@ -6,7 +6,7 @@ import (
 )
 
 type Question struct {
-	ID          string    `json:"id"`
+	BelongsTo   string    `json:"id"`
 	Name        string    `json:"name"`
 	Class       string    `json:"class"`
 	Topic       string    `json:"topic"`
@@ -59,7 +59,7 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 	}
 
 	return &Question{
-		ID:          id,
+		BelongsTo:   id,
 		Name:        name,
 		Class:       class,
 		Topic:       topic,
@@ -71,6 +71,6 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 	}, nil
 }
 
-func QuestionResolved(q *Question) bool {
-	return q.ResolvedAt == time.Time{}
+func (q *Question) QuestionResolved() bool {
+	return q.ResolvedAt != time.Time{}
 }
