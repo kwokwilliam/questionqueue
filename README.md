@@ -62,19 +62,20 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `500`: Internal server error.
 
 `/v1/teacher`: TA/teacher control
-* `GET`: Get TA/teacher information.
-  * `200`; `application/json`: Successfully retrieves TA/teacher information; returns encoded user model in the body.
-  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
-  * `500`: Internal server error.
 * `POST`; `application/json`: Create new TA/teacher.
   * `201`; `application/json`: Successfully creates a new TA/teacher; returns encoded user model in the body.
-  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 * `PATCH`; `application/json`: Update information for a TA/teacher.
   * `200`: Successfully updates information for the user.
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
+  * `500`: Internal server error.
+
+`/v1/teacher/{teacher_id}`: specific TA/teacher control
+* `GET`: Get TA/teacher information.
+  * `200`; `application/json`: Successfully retrieves TA/teacher information; returns encoded user model in the body.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 
 `/v1/teacher/login`: TA/teacher session control
