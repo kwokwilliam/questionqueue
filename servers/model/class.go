@@ -1,8 +1,8 @@
 package model
 
 type Class struct {
-	Code string   `json:"code"`
-	Type []string `json:"type"`
+	Code string   `bson:"code"`
+	Type []string `bson:"type"`
 }
 
 func ValidateClass (code string) bool {
