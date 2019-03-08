@@ -8,10 +8,11 @@ import json
 
 # MongoDB configuration
 uri = os.getenv(
-    "MONGO_URI", "mongodb://localhost:27017/myDatabase")
+    "MONGO_URI", "mongodb://localhost:27017/questionqueue")
 app.config["MONGO_URI"] = uri
 mongo = PyMongo(app)
 db = mongo.db
+print(db)
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
 teachers = os.getenv("TEACHER_COLLECTION", 'teachers')
@@ -34,7 +35,9 @@ def class_handler():
         # Successfully retrieves all classes; returns the encoded list in the body.
         all_classes = []
         try:
-            all_classes = db[classes].find()
+            all_classes = list(db[classes].find())
+            for c in all_classes:
+                c['_id'] = str(c['_id'])
         except pymongo.errors.PyMongoError:
             return handle_db_error()
 
@@ -50,11 +53,24 @@ def class_handler():
             return content
 
         req_body = request.get_json()
+
         if req_body.get("class_number", "") == "":
             return handle_missing_field("Class number is required")
-        elif req_body.get("topics", "") == "" or "[]":
+        elif req_body.get("topics", "") == "" or not isinstance(req_body['topics'], list):
             return handle_missing_field("Class topics are required")
 
+        if not isinstance(req_body['class_number'], int):
+            resp = Response("Class number must be an integer",
+                            status=400, mimetype=TEXT_TYPE)
+            return resp
+
+        # Check if it already exists in the database
+        class_query = {"class_number": req_body['class_number']}
+        class_check, err = check_for_object(class_query, 'class')
+        if class_check != None:
+            return err
+
+        # Insert into database
         new_class = {
             "class_number": req_body['class_number'],
             "topics": req_body['topics']
@@ -74,7 +90,7 @@ def class_handler():
 
 
 # PATCH an existing class - overwrite topics
-@app.route('/v1/class/<class_number>', methods=['PATCH'])
+@app.route('/v1/class/<int:class_number>', methods=['PATCH'])
 def specific_class_handler(class_number):
     # Check for authentication
     auth = check_auth(request)
@@ -89,13 +105,13 @@ def specific_class_handler(class_number):
 
         # Check if the requested class exists in the database
         class_query = {"class_number": class_number}
-        req_class = check_for_object(class_query, 'Class')
-        if req_class != None:
-            return req_class
+        req_class, err = check_for_object(class_query, 'class')
+        if req_class == None:
+            return err
 
         # Retrieve JSON body and check for validity
         req_body = request.get_json()
-        if req_body.get("topics", "") == "" or "[]":
+        if req_body.get("topics", "") == "" or not isinstance(req_body['topics'], list):
             return handle_missing_field("Class topics are required")
 
         topics = list(req_body['topics'])
@@ -253,12 +269,17 @@ def handle_missing_field(message):
 def check_for_object(query, obj_type):
     curr_object = {}
     try:
-        if type == 'class':
+        if obj_type == 'class':
             curr_object = db[classes].find_one(query)
+            # print(curr_object)
     except pymongo.errors.PyMongoError:
         return handle_db_error()
 
     if curr_object == None:
-        message = obj_type + " not found"
+        message = obj_type.capitalize() + " not found"
         resp = Response(message, status=400, mimetype=TEXT_TYPE)
-        return resp
+        return (None, resp)
+
+    message = obj_type.capitalize() + " already exists"
+    resp = Response(message, status=400, mimetype=TEXT_TYPE)
+    return (curr_object, resp)
