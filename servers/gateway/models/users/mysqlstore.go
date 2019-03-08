@@ -1,14 +1,8 @@
 package users
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
-	"errors"
 	"questionqueue/servers/gateway/indexes"
-	"time"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 // GetByType is an enumerate for GetBy* functions implemented
@@ -164,75 +158,6 @@ func (ms *MySQLStore) Delete(id int64) error {
 		return err
 	}
 
-	rowsAffected, rowsAffectedErr := res.RowsAffected()
-	if rowsAffectedErr != nil {
-		return rowsAffectedErr
-	}
-
-	if rowsAffected != 1 {
-		return ErrUserNotFound
-	}
-
-	return nil
-}
-
-// SetResetCode will set the reset code for the person with the specified email.
-func (ms *MySQLStore) SetResetCode(email string) (string, error) {
-	// Generate random hash
-	randomBytes := make([]byte, 32)
-	rand.Read(randomBytes)
-	resetCode := base64.URLEncoding.EncodeToString(randomBytes)
-
-	// Update query
-	upd := "update Users set ResetCode=?, ResetTime=now() where Email = ?"
-	res, err := ms.Database.Exec(upd, resetCode, email)
-	if err != nil {
-		return "", err
-	}
-	rowsAffected, rowsAffectedErr := res.RowsAffected()
-	if rowsAffectedErr != nil {
-		return "", rowsAffectedErr
-	}
-
-	if rowsAffected != 1 {
-		return "", ErrUserNotFound
-	}
-	return resetCode, nil
-}
-
-// GetResetCodeByEmail grabs the reset code and time the reset code was created from the database
-func (ms *MySQLStore) GetResetCodeByEmail(email string) (string, time.Time, error) {
-	var nt mysql.NullTime
-	var resetCode string
-	sel := "select ResetCode, ResetTime from Users where Email = ?"
-	rows, err := ms.Database.Query(sel, email)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	defer rows.Close()
-
-	rows.Next()
-	if err := rows.Scan(&resetCode, &nt); err != nil {
-		return "", time.Time{}, err
-	}
-
-	if !nt.Valid {
-		return "", time.Time{}, errors.New("Invalid time")
-	}
-
-	return resetCode, nt.Time, nil
-
-}
-
-// UpdatePassword will update the password for the specific user. I am fully
-// aware this can be done in a single call alongside the select with some sort
-// of sql if statement but I'm too lazy to think through that logic at this moment
-func (ms *MySQLStore) UpdatePassword(email string, passHash []byte) error {
-	upd := "update Users set PassHash = ?, ResetCode = NULL, ResetTime = NULL where Email = ?"
-	res, err := ms.Database.Exec(upd, passHash, email)
-	if err != nil {
-		return err
-	}
 	rowsAffected, rowsAffectedErr := res.RowsAffected()
 	if rowsAffectedErr != nil {
 		return rowsAffectedErr
