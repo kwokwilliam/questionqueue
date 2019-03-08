@@ -14,13 +14,15 @@ mongo = PyMongo(app)
 db = mongo.db
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
+teachers = os.getenv("TEACHER_COLLECTION", 'teachers')
+queue = os.getenv("QUEUE_COLLECTION", 'queue')
 
 # Constants
 JSON_TYPE = 'application/json'
 TEXT_TYPE = 'text/plain'
 
 
-# GETs or POSTs a new class
+# GET a current class or POST a new class
 @app.route('/v1/class', methods=['GET', 'POST'])
 def class_handler():
     # Check for authentication
@@ -71,7 +73,7 @@ def class_handler():
         # return 'POST /v1/class'
 
 
-# PATCHes an existing class - overwrite topics
+# PATCH an existing class - overwrite topics
 @app.route('/v1/class/<class_number>', method=['PATCH'])
 def specific_class_handler(class_number):
     # Check for authentication
@@ -112,23 +114,37 @@ def specific_class_handler(class_number):
         # return 'PATCH /v1/class'
 
 
-@app.route('/v1/teacher', methods=['GET', 'POST', 'PATCH'])
+# POST a new teacher
+@app.route('/v1/teacher', methods=['POST'])
 def teacher_handler():
     # Check for authentication
     auth = check_auth(request)
     if auth != None:
         return auth
 
-    if request.method == 'GET':
-        return 'GET /v1/class'
-    elif request.method == 'POST':
-        return 'POST /v1/class'
-    else:
-        return 'PATCH /v1/class'
+    if request.method == 'POST':
+        return 'POST /v1/teacher'
 
     # return "teacher handler"
 
 
+# GET an existing teacher or PATCH an existing teacher
+@app.route('/v1/teacher/<teacher_id>', method=['GET', 'PATCH'])
+def specific_teacher_handler(teacher_id):
+     # Check for authentication
+    auth = check_auth(request)
+    if auth != None:
+        return auth
+
+    # Check if requested teacher exists in the database
+
+    if request.method == 'GET':
+        return 'GET /v1/teacher/<teacher_id>'
+    elif request.method == 'PATCH':
+        return 'PATCH /v1/teacher/<teacher_id>'
+
+
+# DELETE a student and question from the queue
 @app.route('/v1/queue/<student_id>', method=['DELETE'])
 def queue_delete_handler(student_id):
     # Check for authentication
