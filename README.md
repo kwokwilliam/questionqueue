@@ -90,6 +90,13 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 * If the user connected with an auth token, we can assume the user is a teacher of a class, so when we emit the entire queue list to it and do so for subsequent users entering or leaving.
 * If no auth token is provided, we only give them the user hashes of people in line.
 
+`/v1/queue/{student_id}`: queue control for TA/teachers
+* `DELETE`: Delete the student from the queue based on the provided `student_id`.
+  * `200`: Successfully resolved the student's question and removed from queue.
+  * `400`: `student_id` does not exist in the queue or has already been resolved.
+  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
+  * `500`: Internal server error.
+
 #### Models
 
 We will be utilizing MongoDB as our persistent data store. 
