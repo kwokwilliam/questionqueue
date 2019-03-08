@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"questionqueue/servers/db"
+	"questionqueue/src/db"
 )
 
 func main() {

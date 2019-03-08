@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"questionqueue/servers/model"
+	"questionqueue/src/model"
 	"sync"
 )
 
@@ -141,6 +141,7 @@ func (ms *MongoStore) GetAllClass() ([]*model.Class, error) {
 	return scanClass(cursor), nil
 }
 
+// ScanClass takes a `mongo.Cursor`, parses all classes and return a slice of class pointers
 func scanClass(cursor *mongo.Cursor) []*model.Class {
 
 	var classes []*model.Class
