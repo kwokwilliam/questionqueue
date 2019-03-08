@@ -53,6 +53,8 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
+
+`/v1/class/{class_number}`: specific class control
 * `PATCH`; `application/json`: Update question types of a class; overwrites current types.
   * `201`; `application/json`: Successfully updates a class; returns updated, encoded class information in the body.
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
