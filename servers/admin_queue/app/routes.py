@@ -74,7 +74,7 @@ def class_handler():
 
 
 # PATCH an existing class - overwrite topics
-@app.route('/v1/class/<class_number>', method=['PATCH'])
+@app.route('/v1/class/<class_number>', methods=['PATCH'])
 def specific_class_handler(class_number):
     # Check for authentication
     auth = check_auth(request)
@@ -114,38 +114,32 @@ def specific_class_handler(class_number):
         # return 'PATCH /v1/class'
 
 
-# POST a new teacher
-@app.route('/v1/teacher', methods=['POST'])
+# POST a new teacher or PATCH an authenticated user
+@app.route('/v1/teacher', methods=['POST', 'PATCH'])
 def teacher_handler():
-    # Check for authentication
-    auth = check_auth(request)
-    if auth != None:
-        return auth
-
     if request.method == 'POST':
         return 'POST /v1/teacher'
+    elif request.method == 'PATCH':
+         # Check for authentication
+        auth = check_auth(request)
+        if auth != None:
+            return auth
+
+        teacher = json.loads(request.headers.get("X-User"))
+        teacher_query = {"id": teacher['id']}
+
+        return 'PATCH /v1/teacher'
 
     # return "teacher handler"
 
 
-# GET an existing teacher or PATCH an existing teacher
-@app.route('/v1/teacher/<teacher_id>', method=['GET', 'PATCH'])
+# GET an existing teacher
+@app.route('/v1/teacher/<teacher_id>', methods=['GET'])
 def specific_teacher_handler(teacher_id):
-     # Check for authentication
-    auth = check_auth(request)
-    if auth != None:
-        return auth
-
-    # Check if requested teacher exists in the database
-
-    if request.method == 'GET':
-        return 'GET /v1/teacher/<teacher_id>'
-    elif request.method == 'PATCH':
-        return 'PATCH /v1/teacher/<teacher_id>'
-
+    return 'GET /v1/teacher/<teacher_id>'
 
 # DELETE a student and question from the queue
-@app.route('/v1/queue/<student_id>', method=['DELETE'])
+@app.route('/v1/queue/<student_id>', methods=['DELETE'])
 def queue_delete_handler(student_id):
     # Check for authentication
     auth = check_auth(request)
