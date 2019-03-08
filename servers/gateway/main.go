@@ -88,6 +88,7 @@ func main() {
 	messagesAddrs := getENVOrExit("MESSAGESADDR")
 	summaryAddrs := getENVOrExit("SUMMARYADDR")
 	rabbitAddr := getENVOrExit("RABBITADDR")
+	queueName := getENVOrExit("QUEUENAME")
 
 	// Set up rabbit stuff
 	conn, err := amqp.Dial(rabbitAddr)
@@ -101,7 +102,7 @@ func main() {
 	}
 	defer ch.Close()
 	q, err := ch.QueueDeclare(
-		"slackQueue",
+		queueName,
 		true,
 		false,
 		false,
@@ -137,7 +138,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to connect to mysql database")
 	}
-	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore, mysqlstore, accessKey, secretKey)
+	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore, mysqlstore)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}

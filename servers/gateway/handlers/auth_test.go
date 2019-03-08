@@ -41,7 +41,7 @@ func createMySQLStoreRefForResting(t *testing.T) users.Store {
 func createNewHandler(SigningKey string, t *testing.T) *HandlerContext {
 	SessionStore := createMemStoreRef()
 	userStore := createMySQLStoreRefForResting(t)
-	ctx, err := NewHandlerContext(SigningKey, SessionStore, userStore, "", "")
+	ctx, err := NewHandlerContext(SigningKey, SessionStore, userStore)
 	if err != nil {
 		t.Errorf("Failed to make handler context [%v]", err)
 	}

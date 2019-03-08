@@ -16,8 +16,6 @@ type HandlerContext struct {
 	SessionStore sessions.Store
 	userStore    users.Store
 	sessionID    sessions.SessionID
-	accessKey    string
-	secretKey    string
 	trie         *indexes.Trie
 	Notifier     *Notifier
 }
@@ -25,9 +23,9 @@ type HandlerContext struct {
 // NewHandlerContext constructs a new HandlerContext,
 // ensuring that the dependencies are valid values
 // It creates an empty sessionID
-func NewHandlerContext(SigningKey string, SessionStore sessions.Store, userStore users.Store, accessKey string, secretKey string) (*HandlerContext, error) {
+func NewHandlerContext(SigningKey string, SessionStore sessions.Store, userStore users.Store) (*HandlerContext, error) {
 	if SessionStore != nil && userStore != nil {
-		return &HandlerContext{SigningKey, SessionStore, userStore, "", accessKey, secretKey, indexes.NewTrie(), &Notifier{}}, nil
+		return &HandlerContext{SigningKey, SessionStore, userStore, "", indexes.NewTrie(), &Notifier{}}, nil
 	}
 	return nil, errors.New("Unable to find session store or user store")
 }

@@ -22,7 +22,7 @@ func TestCORSHandler(t *testing.T) {
 
 	sessionStore := createMemStoreRef()
 	userStore := createMySQLStoreRefForResting(t)
-	ctx, err := NewHandlerContext("random key", sessionStore, userStore, "", "")
+	ctx, err := NewHandlerContext("random key", sessionStore, userStore)
 
 	rr := httptest.NewRecorder()
 
