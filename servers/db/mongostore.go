@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	// TODO: get a proper name
-	dbName = "whatever"
+	dbName = "question_queue"
 	collClass = "class"
 	collTeacher = "teacher"
 	collQuestion = "question"
@@ -58,28 +57,54 @@ func (ms *MongoStore) getAll(dbName, collName string) (*mongo.Cursor, error) {
 	return ms.getCollection(dbName, collName).Find(nil, map[string]string{}, nil)
 }
 
-func (ms *MongoStore) GetAllClass() ([]*model.Class, error) {
-	var classes []*model.Class
+// GetAllTeacher returns all teacher documents from MongoDB.
+func (ms *MongoStore) GetAllTeacher() ([]*model.Teacher, error) {
+	var teachers []*model.Teacher
 
-	cursor, err := ms.getAll("test", "testing")
+	cursor, err := ms.getAll(dbName, collTeacher)
 	if err != nil {
 		return nil, err
 	}
 
 	for cursor.Next(nil) {
-		class := model.Class{}
-		if err := cursor.Decode(&class);
-		err != nil {
+		teacher := model.Teacher{}
+		if err := cursor.Decode(&teacher);
+			err != nil {
 			log.Printf("cannot unmarshal class: %v", err)
 			continue
 		}
 
-		if class.Code != "" && len(class.Type) > 0{
-			classes = append(classes, &class)
+		if teacher.NotEmpty() {
+			teachers = append(teachers, &teacher)
 		}
 	}
 
-	return classes, nil
+	return teachers, nil
+}
+
+// GetAllQuestions returns all question documents from MongoDB.
+func (ms *MongoStore) GetAllQuestions() ([]*model.Question, error) {
+	var questions []*model.Question
+
+	cursor, err := ms.getAll(dbName, collQuestion)
+	if err != nil {
+		return nil, err
+	}
+
+	for cursor.Next(nil) {
+		question := model.Question{}
+		if err := cursor.Decode(&question);
+			err != nil {
+			log.Printf("cannot unmarshal class: %v", err)
+			continue
+		}
+
+		if question.Name != "" {
+			questions = append(questions, &question)
+		}
+	}
+
+	return questions, nil
 }
 
 
@@ -89,30 +114,52 @@ func (ms *MongoStore) InsertClass(class *model.Class) (*mongo.InsertOneResult, e
 }
 
 // FindClass returns a `model.Class` using a `model.Class.Code`.
-func (ms *MongoStore) FindOneClass(code string) (*model.Class, error) {
+func (ms *MongoStore) GetOneClass(code string) (*model.Class, error) {
 
 	cursor, err := ms.getCollection(dbName, collClass).Find(nil, map[string]string{"Code": code}, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var class []model.Class
-
-	for cursor.Next(nil) {
-		c := model.Class{}
-		err := json.Unmarshal([]byte(cursor.Current.String()), c)
-		if err != nil {
-			return nil, err
-		}
-
-		class = append(class, c)
-	}
+	class := scanClass(cursor)
 
 	if len(class) != 1 {
 		return nil, errors.New(fmt.Sprintf("expect only 1 result, got %v results", len(class)))
 	} else {
-		return &class[0], nil
+		return class[0], nil
 	}
+}
+
+// GetAllClass returns all class documents from MongoDB.
+func (ms *MongoStore) GetAllClass() ([]*model.Class, error) {
+
+	cursor, err := ms.getAll(dbName, collClass)
+	if err != nil {
+		return nil, err
+	}
+
+	return scanClass(cursor), nil
+}
+
+func scanClass(cursor *mongo.Cursor) []*model.Class {
+
+	var classes []*model.Class
+
+	for cursor.Next(nil) {
+		class := model.Class{}
+		// TODO: maybe return error?
+		if err := cursor.Decode(&class);
+			err != nil {
+			log.Printf("cannot unmarshal class: %v", err)
+			continue
+		}
+
+		if class.Code != "" && len(class.Type) > 0{
+			classes = append(classes, &class)
+		}
+	}
+
+	return classes
 }
 
 // UpdateClass takes a `model.Class` to overwrite a current class with a new `model.Class`.

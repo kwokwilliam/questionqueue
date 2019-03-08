@@ -21,6 +21,10 @@ type NewTeacher struct {
 	LastName     string `json:"last_name"`
 }
 
+func (t *Teacher) NotEmpty() bool {
+	return t.ID > 0 && t.Email != "" && t.FirstName != "" && t.LastName != ""
+}
+
 func CreateNewTeacher(email, pw, pwConf, fn, ln string) (*NewTeacher, error) {
 
 	var (
