@@ -12,6 +12,7 @@ import pika
 # Constants and environment variables
 JSON_TYPE = 'application/json'
 TEXT_TYPE = 'text/plain'
+
 MONGO_URI = os.getenv(
     "MONGO_URI", "mongodb://localhost:27017/questionqueue")
 REDIS_HOST = os.getenv("REDIS_HOST", '127.0.0.1')
