@@ -18,6 +18,12 @@ type CORS struct {
 	handler http.Handler
 }
 
+const headerAccessControlAllowOrigin = "Access-Control-Allow-Origin"
+const allOrigins = "*"
+
+const headerContentType = "Content-Type"
+const contentTypeJSON = "application/json"
+
 // ServeHTTP handles the request by passing it to the real handler
 // after adding CORS headers to everything
 func (c *CORS) ServeHTTP(w http.ResponseWriter, r *http.Request) {

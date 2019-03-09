@@ -8,12 +8,10 @@ import (
 	"net/url"
 	"os"
 	"questionqueue/servers/gateway/handlers"
-	"questionqueue/servers/gateway/models/users"
-	"questionqueue/servers/gateway/sessions"
+	"questionqueue/servers/gateway/store"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/streadway/amqp"
@@ -38,8 +36,8 @@ func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 		atomic.AddInt32(&counter, 1)
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Del("X-User")
-		sessionState := &handlers.SessionState{}
-		_, err := sessions.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
+		// sessionState := &handlers.SessionState{}
+		// _, err := sessions.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
 
 		// If there is an error, we cannot deal with it here,
 		// so forward it to the API to deal with it. (Could probably
@@ -126,19 +124,15 @@ func main() {
 	client := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
-	redisStore := sessions.NewRedisStore(client, time.Hour)
-	mysqlstore, err := users.NewMySQLStore(dsn)
+	redisStore := store.NewRedisStore(client)
 	if err != nil {
 		log.Fatal("Unable to connect to mysql database")
 	}
-	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore, mysqlstore)
+	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}
 
-	if err = ctx.InitiateTrie(); err != nil {
-		log.Fatal("Failed to initiate trie")
-	}
 	// Set port
 	if len(addr) == 0 {
 		addr = ":443"
@@ -150,10 +144,6 @@ func main() {
 
 	// Create new mux for web server and set routes
 	mux := mux.NewRouter()
-	mux.HandleFunc("/v1/users", ctx.UsersHandler)
-	mux.HandleFunc("/v1/users/{uid}", ctx.SpecificUsersHandler)
-	mux.HandleFunc("/v1/sessions", ctx.SessionsHandler)
-	mux.HandleFunc("/v1/sessions/{uid}", ctx.SpecificSessionHandler)
 	mux.HandleFunc("/v1/ws", ctx.WebSocketConnectionHandler)
 
 	// Wrap mux with CORS handler

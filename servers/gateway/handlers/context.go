@@ -2,66 +2,65 @@ package handlers
 
 import (
 	"errors"
-	"questionqueue/servers/gateway/indexes"
-	"questionqueue/servers/gateway/models/users"
-	"questionqueue/servers/gateway/sessions"
+	"fmt"
+	"net/http"
+	"questionqueue/servers/gateway/store"
+
+	"github.com/gorilla/websocket"
 )
 
+var errFailNewContext = errors.New("Failed to create context")
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 // HandlerContext is a struct that will be a receiver on any
-// HTTP handler functions that need access to globals, such
-// as the key used for signing and verifying SessionIDs,
-// the session store and the user store
+// HTTP handler functions that need access to globals
 type HandlerContext struct {
-	SigningKey   string
-	SessionStore sessions.Store
-	userStore    users.Store
-	sessionID    sessions.SessionID
-	trie         *indexes.Trie
-	Notifier     *Notifier
+	SessAndQueueStore store.Store
+	Notifier          *Notifier
 }
 
-// NewHandlerContext constructs a new HandlerContext,
-// ensuring that the dependencies are valid values
-// It creates an empty sessionID
-func NewHandlerContext(SigningKey string, SessionStore sessions.Store, userStore users.Store) (*HandlerContext, error) {
-	if SessionStore != nil && userStore != nil {
-		return &HandlerContext{SigningKey, SessionStore, userStore, "", indexes.NewTrie(), &Notifier{}}, nil
+// NewHandlerContext creates a new handler context
+func NewHandlerContext(SessAndQueueStore store.Store) (*HandlerContext, error) {
+	if SessAndQueueStore != nil {
+		return &HandlerContext{SessAndQueueStore, &Notifier{}}, nil
 	}
-	return nil, errors.New("Unable to find session store or user store")
+	return nil, errFailNewContext
 }
 
-// SetSessionID sets the session id
-func (ctx *HandlerContext) SetSessionID(sid sessions.SessionID) {
-	ctx.sessionID = sid
-}
+// WebSocketConnectionHandler handles the connection updator
+// to a WebSocket connection.
+func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *http.Request) {
+	// user is allowed to connect a websocket even if not authenticated
 
-// DeleteCurrentSession will delete the current session stored in context
-func (ctx *HandlerContext) DeleteCurrentSession() error {
-	return ctx.SessionStore.Delete(ctx.sessionID)
-}
-
-// InitiateTrie initiates the user trie
-func (ctx *HandlerContext) InitiateTrie() error {
-	if err := ctx.userStore.LoadUsersToTrie(ctx.trie); err != nil {
-		return err
+	// Upgrade connection to websocket connection
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Failed to open websocket connection", 401)
+		return
 	}
-	return nil
-}
 
-// CurrentUser gets the current user
-func (ctx *HandlerContext) CurrentUser() (*users.User, error) {
-	currentSession := &SessionState{}
-	if err := ctx.SessionStore.Get(ctx.sessionID, currentSession); err != nil {
-		return nil, err
-	}
-	return &currentSession.User, nil
+	// insert connection to list
+	ctx.Notifier.InsertConnection(conn, sessionState.User.ID)
+	// For each new websocket connection, start a goroutine
+	// 		this goroutine will read incoming messages like the tutorial
+	//		If receive error while reading, close websocket and remove from list
+	go (func(conn *websocket.Conn, userID int64, ctx *HandlerContext) {
+		defer conn.Close()
+		defer ctx.Notifier.RemoveConnection(userID)
+		for {
+			messageType, p, err := conn.ReadMessage()
+			if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
+				fmt.Print("Client says", p)
+			} else if messageType == websocket.CloseMessage || err != nil {
+				break
+			}
+		}
+	})(conn, sessionState.User.ID, ctx)
 }
-
-// initialize user 1
-// initialize user 2
-//  use auth token to query for user
-//	change first/last name as second user
-// 		ERRORS HAPPEN INTERNALLY in the remove function (removeSplitToTrie/removeNamesInTrie)
-//	try to query for second user with name
-//		because the removal failed, it did not continue with the addition of the new names
-//		but it did update in database.
