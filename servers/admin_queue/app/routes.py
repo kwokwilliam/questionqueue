@@ -5,22 +5,40 @@ from flask_pymongo import PyMongo
 import pymongo
 import os
 import json
+import datetime
+import redis
+import pika
+
+# Constants and environment variables
+JSON_TYPE = 'application/json'
+TEXT_TYPE = 'text/plain'
+MONGO_URI = os.getenv(
+    "MONGO_URI", "mongodb://localhost:27017/questionqueue")
+REDIS_HOST = os.getenv("REDIS_HOST", 'localhost')
+REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
+RABBIT_HOST = os.environ.get('RABBIT_HOST', "localhost")
 
 # MongoDB configuration
-uri = os.getenv(
-    "MONGO_URI", "mongodb://localhost:27017/questionqueue")
-app.config["MONGO_URI"] = uri
+app.config["MONGO_URI"] = MONGO_URI
 mongo = PyMongo(app)
 db = mongo.db
-# print(db)
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
 teachers = os.getenv("TEACHER_COLLECTION", 'teachers')
 queue = os.getenv("QUEUE_COLLECTION", 'queue')
 
-# Constants
-JSON_TYPE = 'application/json'
-TEXT_TYPE = 'text/plain'
+# Redis configuration
+r = redis.StrictRedis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password='')
+
+# RabbitMQ configuration
+params = pika.ConnectionParameters(host=RABBIT_HOST, heartbeat=0)
+connection = pika.BlockingConnection(params)
+mq_channel = connection.channel()
+mq_channel.queue_declare(queue=QUEUE_NAME, durable=True)
 
 
 # GET a current class or POST a new class
@@ -138,8 +156,34 @@ def queue_delete_handler(student_id):
         return auth
 
     if request.method == 'DELETE':
+        # Update in mongo
+        q_query = {"id": student_id}
+        req_q, err = check_for_object(q_query, 'question')
+        if req_q == None:
+            return err
 
-        return "queue delete handler"
+        time_update = {
+            "$set": {"resolvedAt": datetime.datetime.now().isoformat()}}
+
+        try:
+            db[queue].update_one(q_query, time_update)
+            updated = db[queue].find_one(q_query)
+            updated['_id'] = str(updated['_id'])
+        except pymongo.errors.PyMongoError:
+            return handle_db_error()
+
+        # Remove from redis
+        try:
+            r.delete(student_id)
+        except Exception:
+            return handle_db_error()
+
+        # Send update to rabbitmq
+        mq_channel.basic_publish(exchange='',
+                                 routing_key=QUEUE_NAME,
+                                 body="resolved")
+
+        return "Queue updated - question resolved"
 
 
 # Custom error handler for status 405 - method not supported
