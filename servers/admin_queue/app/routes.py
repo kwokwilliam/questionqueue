@@ -12,7 +12,7 @@ uri = os.getenv(
 app.config["MONGO_URI"] = uri
 mongo = PyMongo(app)
 db = mongo.db
-print(db)
+# print(db)
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
 teachers = os.getenv("TEACHER_COLLECTION", 'teachers')
@@ -129,88 +129,6 @@ def specific_class_handler(class_number):
         return resp
         # return 'PATCH /v1/class'
 
-
-# POST a new teacher or PATCH an authenticated user
-@app.route('/v1/teacher', methods=['POST', 'PATCH'])
-def teacher_handler():
-    if request.method == 'POST':
-        # Check for authentication
-        auth = check_auth(request)
-        if auth != None:
-            return auth
-
-        # Check content type
-        content = check_content_type(request)
-        if content != None:
-            return content
-
-        return 'POST /v1/teacher'
-    elif request.method == 'PATCH':
-        # Check for authentication
-        auth = check_auth(request)
-        if auth != None:
-            return auth
-
-        # Check content type
-        content = check_content_type(request)
-        if content != None:
-            return content
-
-        # Retrieve JSON body
-        x_user = json.loads(request.headers.get("X-User"))
-        teacher_query = {"id": x_user['id']}
-
-        req_body = request.get_json()
-        update_first = req_body.get("firstname", "")
-        update_last = req_body.get("lastname", "")
-
-        # Create update query depending on which names are to be updated
-        update_query = {}
-        if update_first != "" and update_last != "":
-            update_query = {"$set": {"firstname": update_first,
-                                     "lastname": update_last}}
-        elif update_first != "":
-            update_query = {"$set": {"firstname": update_first}}
-        elif update_last != "":
-            update_query = {"$set": {"lastname": update_last}}
-
-        # Update and retreive updated teacher
-        updated = {}
-        try:
-            db[teachers].update(teacher_query, update_query)
-            updated = db[teachers].find_one(teacher_query)
-            updated['_id'] = str(updated['_id'])
-        except pymongo.errors.PyMongoError:
-            return handle_db_error()
-
-        resp = Response(json.dumps(updated), status=200, mimetype=JSON_TYPE)
-        return resp
-        # return 'PATCH /v1/teacher'
-
-
-# GET an existing teacher
-@app.route('/v1/teacher/<teacher_id>', methods=['GET'])
-def specific_teacher_handler(teacher_id):
-    # Check for authentication
-    auth = check_auth(request)
-    if auth != None:
-        return auth
-
-    if request.method == 'GET':
-        teacher_query = {"id": teacher_id}
-
-        teacher = {}
-        try:
-            teacher = db[teachers].find_one(teacher_query)
-            teacher['id'] = str(teacher['id'])
-        except pymongo.errors.PyMongoError:
-            return handle_db_error()
-
-        resp = Response(json.dumps(teacher), status=200, mimetype=JSON_TYPE)
-        return resp
-
-    # return 'GET /v1/teacher/<teacher_id>'
-
 # DELETE a student and question from the queue
 @app.route('/v1/queue/<student_id>', methods=['DELETE'])
 def queue_delete_handler(student_id):
@@ -220,6 +138,7 @@ def queue_delete_handler(student_id):
         return auth
 
     if request.method == 'DELETE':
+
         return "queue delete handler"
 
 
