@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,17 +42,17 @@ func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 		// so forward it to the API to deal with it. (Could probably
 		// deal with it here but don't know if I should pass the
 		// responsewriter)
-		if err != nil {
-			r.Header.Add("X-User", "{}")
-		} else {
-			user := sessionState.User
-			userJSON, err := json.Marshal(user)
-			if err != nil {
-				r.Header.Add("X-User", "{}")
-			} else {
-				r.Header.Add("X-User", string(userJSON))
-			}
-		}
+		// if err != nil {
+		// 	r.Header.Add("X-User", "{}")
+		// } else {
+		// 	user := sessionState.User
+		// 	userJSON, err := json.Marshal(user)
+		// 	if err != nil {
+		// 		r.Header.Add("X-User", "{}")
+		// 	} else {
+		// 		r.Header.Add("X-User", string(userJSON))
+		// 	}
+		// }
 		r.Host = targ.Host
 		r.URL.Host = targ.Host
 		r.URL.Scheme = targ.Scheme
@@ -79,11 +78,10 @@ func main() {
 	addr := os.Getenv("ADDR")
 	tlscert := getENVOrExit("TLSCERT")
 	tlskey := getENVOrExit("TLSKEY")
-	sessionKey := getENVOrExit("SESSIONKEY")
 	redisAddr := getENVOrExit("REDISADDR")
-	dsn := getENVOrExit("DSN")
 	rabbitAddr := getENVOrExit("RABBITADDR")
-	queueName := getENVOrExit("QUEUENAME")
+	rabbitQueueName := getENVOrExit("RABBITQUEUENAME")
+	redisQueueName := getENVOrExit("REDISQUEUENAME")
 
 	// Set up rabbit stuff
 	conn, err := amqp.Dial(rabbitAddr)
@@ -97,7 +95,7 @@ func main() {
 	}
 	defer ch.Close()
 	q, err := ch.QueueDeclare(
-		queueName,
+		rabbitQueueName,
 		true,
 		false,
 		false,
@@ -124,11 +122,11 @@ func main() {
 	client := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
-	redisStore := store.NewRedisStore(client)
+	redisStore := store.NewRedisStore(client, redisQueueName)
 	if err != nil {
-		log.Fatal("Unable to connect to mysql database")
+		log.Fatal("Unable to connect to redis database")
 	}
-	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore)
+	ctx, err := handlers.NewHandlerContext(redisStore)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}

@@ -47,13 +47,13 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 	}
 
 	// insert connection to list
-	ctx.Notifier.InsertConnection(conn, sessionState.User.ID)
+	// ctx.Notifier.InsertConnection(conn, sessionState.User.ID)
 	// For each new websocket connection, start a goroutine
 	// 		this goroutine will read incoming messages like the tutorial
 	//		If receive error while reading, close websocket and remove from list
-	go (func(conn *websocket.Conn, userID int64, ctx *HandlerContext) {
+	go (func(conn *websocket.Conn, ctx *HandlerContext) {
 		defer conn.Close()
-		defer ctx.Notifier.RemoveConnection(userID)
+		// defer ctx.Notifier.RemoveConnection(userID)
 		for {
 			messageType, p, err := conn.ReadMessage()
 			if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
@@ -62,5 +62,5 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 				break
 			}
 		}
-	})(conn, sessionState.User.ID, ctx)
+	})(conn, ctx)
 }
