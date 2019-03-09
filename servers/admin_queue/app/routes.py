@@ -14,7 +14,7 @@ JSON_TYPE = 'application/json'
 TEXT_TYPE = 'text/plain'
 MONGO_URI = os.getenv(
     "MONGO_URI", "mongodb://localhost:27017/questionqueue")
-REDIS_HOST = os.getenv("REDIS_HOST", 'localhost')
+REDIS_HOST = os.getenv("REDIS_HOST", '127.0.0.1')
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
 RABBIT_HOST = os.environ.get('RABBIT_HOST', "localhost")
@@ -156,7 +156,7 @@ def queue_delete_handler(student_id):
         return auth
 
     if request.method == 'DELETE':
-        # Update in mongo
+        # Update resolution in mongo
         q_query = {"id": student_id}
         req_q, err = check_for_object(q_query, 'question')
         if req_q == None:
@@ -167,8 +167,6 @@ def queue_delete_handler(student_id):
 
         try:
             db[queue].update_one(q_query, time_update)
-            updated = db[queue].find_one(q_query)
-            updated['_id'] = str(updated['_id'])
         except pymongo.errors.PyMongoError:
             return handle_db_error()
 
@@ -179,12 +177,24 @@ def queue_delete_handler(student_id):
             return handle_db_error()
 
         # Send update to rabbitmq
-        mq_channel.basic_publish(exchange='',
-                                 routing_key=QUEUE_NAME,
-                                 body="resolved")
+        try:
+            mq_channel.basic_publish(exchange='',
+                                     routing_key=QUEUE_NAME,
+                                     body="resolved")
+        except (pika.exceptions.ConnectionClosed, pika.exceptions.AMQPConnectionError):
+            resp = Response("RabbitMQ error", status=500, mimetype=TEXT_TYPE)
+            return resp
 
-        return "Queue updated - question resolved"
+        resp = Response("Queue updated - question resolved",
+                        status=200, mimetype=TEXT_TYPE)
+        return resp
 
+
+# Custom error handler for status 404 - method not supported
+@app.errorhandler(404)
+def method_not_supported(error):
+    resp = Response("404 Not Found", status=405)
+    return resp
 
 # Custom error handler for status 405 - method not supported
 @app.errorhandler(405)
@@ -235,6 +245,10 @@ def check_for_object(query, obj_type):
         if obj_type == 'class':
             curr_object = db[classes].find_one(query)
             # print(curr_object)
+        elif obj_type == 'question':
+            print('line 253: question query')
+            curr_object = db[queue].find_one(query)
+            print(curr_object)
     except pymongo.errors.PyMongoError:
         return handle_db_error()
 
