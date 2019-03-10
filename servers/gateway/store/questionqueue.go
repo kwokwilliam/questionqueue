@@ -20,5 +20,17 @@ type Question struct {
 //		]
 // }
 type QuestionQueue struct {
-	Queue []Question `json:"queue"`
+	Queue []*Question `json:"queue"`
+}
+
+// GetStudentizedQueue will return a copy of the original question queue with
+// all data stripped except the ID of the individuals within the queue.
+func (q *QuestionQueue) GetStudentizedQueue() *QuestionQueue {
+	studentizedQueue := &QuestionQueue{}
+	for _, question := range q.Queue {
+		studentizedQueue.Queue = append(studentizedQueue.Queue, &Question{
+			ID: question.ID,
+		})
+	}
+	return studentizedQueue
 }

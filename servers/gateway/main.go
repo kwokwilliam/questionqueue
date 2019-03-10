@@ -121,7 +121,7 @@ func main() {
 		addr = ":443"
 	}
 
-	go ctx.Notifier.SendMessagesToWebsockets(queueMessages)
+	go ctx.Notifier.SendMessagesToWebsockets(queueMessages, ctx.SessAndQueueStore)
 
 	// set up proxies
 

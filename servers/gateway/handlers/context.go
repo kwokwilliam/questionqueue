@@ -46,26 +46,30 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	// set up boolean isfoundsessionid to false
-	// check if Auth header is active and if so
-	// 		check redis store for auth header using rs.IsFoundSessionID
-	// get student id from query parameter, set teacher from isfoundsessionid
+	// check if is teacher
+	isTeacher := false
+	if authHeader := r.Header.Get("Authentication"); authHeader != "" {
+		isTeacher = ctx.SessAndQueueStore.IsFoundSessionID(authHeader)
+	}
 
-	// insert connection to list
-	// ctx.Notifier.InsertConnection(conn, sessionState.User.ID)
-	// For each new websocket connection, start a goroutine
-	// 		this goroutine will read incoming messages like the tutorial
-	//		If receive error while reading, close websocket and remove from list
-	go (func(conn *websocket.Conn, ctx *HandlerContext) {
-		defer conn.Close()
-		// defer ctx.Notifier.RemoveConnection(userID)
-		for {
-			messageType, p, err := conn.ReadMessage()
-			if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
-				fmt.Print("Client says", p)
-			} else if messageType == websocket.CloseMessage || err != nil {
-				break
+	identification := r.URL.Query().Get("identification")
+	if identification != "" {
+		// insert connection to list
+		ctx.Notifier.InsertConnection(conn, identification, isTeacher)
+
+		// For each new websocket connection, start a goroutine to handler connection defer
+		go (func(conn *websocket.Conn, ctx *HandlerContext, identification string) {
+			defer conn.Close()
+			defer ctx.Notifier.RemoveConnection(identification)
+			for {
+				messageType, p, err := conn.ReadMessage()
+				if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
+					fmt.Print("Client says", p)
+				} else if messageType == websocket.CloseMessage || err != nil {
+					break
+				}
 			}
-		}
-	})(conn, ctx)
+		})(conn, ctx, identification)
+	}
+
 }
