@@ -46,6 +46,11 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 		return
 	}
 
+	// set up boolean isfoundsessionid to false
+	// check if Auth header is active and if so
+	// 		check redis store for auth header using rs.IsFoundSessionID
+	// get student id from query parameter, set teacher from isfoundsessionid
+
 	// insert connection to list
 	// ctx.Notifier.InsertConnection(conn, sessionState.User.ID)
 	// For each new websocket connection, start a goroutine
