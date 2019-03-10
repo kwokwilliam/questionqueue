@@ -17,4 +17,9 @@ type Store interface {
 	// GetCurrentQueue gets the current queue
 	// In the future this can be changed to manage more than one queue
 	GetCurrentQueue() (*QuestionQueue, error)
+
+	// IsFoundSessionID will search the database for the session ID.
+	// if it is found it returns true. Otherwise it returns false, even
+	// in the case of an error.
+	IsFoundSessionID(bearerToken string) bool
 }

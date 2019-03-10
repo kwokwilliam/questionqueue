@@ -30,3 +30,15 @@ func (s *RedisStore) GetCurrentQueue() (*QuestionQueue, error) {
 	}
 	return returnQueue, nil
 }
+
+// IsFoundSessionID will search the redis database for the session ID.
+// if it is found it returns true. Otherwise it returns false, even
+// in the case of an error.
+func (s *RedisStore) IsFoundSessionID(bearerToken string) bool {
+	getSessionID := s.Client.Get(bearerToken)
+	if getSessionID.Err() != nil {
+		return false
+	}
+
+	return getSessionID.Val() != ""
+}
