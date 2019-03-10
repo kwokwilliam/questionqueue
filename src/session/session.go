@@ -34,7 +34,7 @@ func BeginSession(signingKey string, store Store, sessionState interface{}, w ht
 		return InvalidSessionID, err
 	}
 
-	w.Header().Add("Authorization", "Bearer "+sid.String())
+	w.Header().Add("Authorization", "Bearer "+sid.getRedisKey())
 	return sid, nil
 }
 
