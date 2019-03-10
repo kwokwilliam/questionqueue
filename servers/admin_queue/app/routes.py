@@ -172,8 +172,16 @@ def queue_delete_handler(student_id):
 
         # Remove from redis
         try:
-            deleted = r.delete(student_id)
-            if deleted != 1:
+            redis_queue = r.get("queue")
+            decoded = json.loads(redis_queue)
+            queue_list = decoded['queue']
+            for i in range(len(queue_list)):
+                if queue_list[i]['id'] == student_id:
+                    queue_list.pop(i)
+
+            decoded['queue'] = queue_list
+            result = r.set("queue", json.dumps(decoded))
+            if result == False:
                 return handle_db_error()
         except Exception:
             return handle_db_error()
