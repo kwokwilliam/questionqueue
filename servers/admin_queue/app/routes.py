@@ -50,7 +50,6 @@ def class_handler():
         return auth
 
     if request.method == 'GET':
-        # Successfully retrieves all classes; returns the encoded list in the body.
         all_classes = []
         try:
             all_classes = list(db[classes].find())
@@ -62,7 +61,6 @@ def class_handler():
         resp = Response(json.dumps(all_classes), status=200,
                         mimetype=JSON_TYPE)
         return resp
-        # return 'GET /v1/class'
 
     elif request.method == 'POST':
         # Check content type
@@ -104,7 +102,6 @@ def class_handler():
         resp = Response(json.dumps(new_class), status=201,
                         mimetype=JSON_TYPE)
         return resp
-        # return 'POST /v1/class'
 
 
 # PATCH an existing class - overwrite topics
@@ -127,7 +124,7 @@ def specific_class_handler(class_number):
         if req_class == None:
             return err
 
-        # Retrieve JSON body and check for validity
+        # Retrieve JSON body, check for validity, and update
         req_body = request.get_json()
         if req_body.get("topics", "") == "" or not isinstance(req_body['topics'], list):
             return handle_missing_field("Class topics are required")
@@ -145,7 +142,7 @@ def specific_class_handler(class_number):
 
         resp = Response(json.dumps(updated), status=200, mimetype=JSON_TYPE)
         return resp
-        # return 'PATCH /v1/class'
+
 
 # DELETE a student and question from the queue
 @app.route('/v1/queue/<student_id>', methods=['DELETE'])
