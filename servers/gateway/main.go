@@ -35,24 +35,9 @@ func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 		atomic.AddInt32(&counter, 1)
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Del("X-User")
-		// sessionState := &handlers.SessionState{}
-		// _, err := sessions.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
 
-		// If there is an error, we cannot deal with it here,
-		// so forward it to the API to deal with it. (Could probably
-		// deal with it here but don't know if I should pass the
-		// responsewriter)
-		// if err != nil {
-		// 	r.Header.Add("X-User", "{}")
-		// } else {
-		// 	user := sessionState.User
-		// 	userJSON, err := json.Marshal(user)
-		// 	if err != nil {
-		// 		r.Header.Add("X-User", "{}")
-		// 	} else {
-		// 		r.Header.Add("X-User", string(userJSON))
-		// 	}
-		// }
+		studentID := r.URL.Query().Get("studentid")
+		r.Header.Add("X-User", `{"id": "`+studentID+`"}`)
 		r.Host = targ.Host
 		r.URL.Host = targ.Host
 		r.URL.Scheme = targ.Scheme

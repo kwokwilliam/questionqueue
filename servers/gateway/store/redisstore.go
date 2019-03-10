@@ -30,20 +30,3 @@ func (s *RedisStore) GetCurrentQueue() (*QuestionQueue, error) {
 	}
 	return returnQueue, nil
 }
-
-// Question is used for individual questions
-type Question struct {
-	ID        string `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Class     string `json:"class,omitempty"`
-	Topic     string `json:"topic,omitempty"`
-	Problem   string `json:"problem,omitempty"`
-	LocationX string `json:"loc.x,omitempty"`
-	LocationY string `json:"loc.y,omitempty"`
-	CreatedAt int64  `json:"createdAt,omitempty"`
-}
-
-// QuestionQueue will be unmarshalled from the redis store
-type QuestionQueue struct {
-	Queue []Question `json:"queue"`
-}

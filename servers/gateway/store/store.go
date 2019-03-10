@@ -14,4 +14,7 @@ var ErrStateNotFound = errors.New("no session state was found in the session sto
 //session data could be stored in memory in a concurrent map,
 //or more typically in a shared key/value server store like redis.
 type Store interface {
+	// GetCurrentQueue gets the current queue
+	// In the future this can be changed to manage more than one queue
+	GetCurrentQueue() (*QuestionQueue, error)
 }
