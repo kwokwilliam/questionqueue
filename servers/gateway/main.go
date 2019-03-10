@@ -8,9 +8,11 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"questionqueue/servers/gateway/handlers"
+	"questionqueue/src/handler"
+	"questionqueue/src/handlers"
 	"questionqueue/servers/gateway/models/users"
 	"questionqueue/servers/gateway/sessions"
+	"questionqueue/src/session"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -27,7 +29,7 @@ import (
 type Director func(r *http.Request)
 
 // CustomDirector forwards to the microservice and passes it the current user.
-func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
+func CustomDirector(targets []*url.URL, ctx *handler.HandlerContext) Director {
 	var counter int32
 	counter = 0
 	mutex := sync.Mutex{}
@@ -39,8 +41,8 @@ func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 		atomic.AddInt32(&counter, 1)
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Del("X-User")
-		sessionState := &handlers.SessionState{}
-		_, err := sessions.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
+		sessionState := &handler.SessionState{}
+		_, err := session.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
 
 		// If there is an error, we cannot deal with it here,
 		// so forward it to the API to deal with it. (Could probably
@@ -139,7 +141,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to connect to mysql database")
 	}
-	ctx, err := handlers.NewHandlerContext(sessionKey, redisStore, mysqlstore, accessKey, secretKey)
+	ctx, err := handler.NewHandlerContext(sessionKey, redisStore, mysqlstore, accessKey, secretKey)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}
@@ -175,7 +177,7 @@ func main() {
 	mux.Handle("/v1/summary", summaryProxy)
 
 	// Wrap mux with CORS handler
-	wrappedMux := handlers.NewCORS(mux)
+	wrappedMux := handler.NewCORS(mux)
 
 	// Start web server, log errors
 	log.Printf("server is listening at %s...", addr)

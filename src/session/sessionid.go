@@ -10,7 +10,7 @@ import (
 )
 
 // InvalidSessionID represents an empty, invalid session ID
-const InvalidSessionID SessionID = ""
+const InvalidSessionID = ""
 
 // idLength is the length of the ID portion
 const idLength = 32
@@ -28,7 +28,7 @@ const idLength = 32
 // +-----------------------------------------------------+
 // |...32 crypto random bytes...|HMAC hash of those bytes|
 // +-----------------------------------------------------+
-type SessionID string
+type SessionID interface{}
 
 // ErrInvalidID is returned when an invalid session id is passed to ValidateID()
 var ErrInvalidID = errors.New("invalid Session ID")
@@ -99,10 +99,10 @@ func ValidateID(id string, signingKey string) (SessionID, error) {
 
 }
 
-// string returns a string representation of the sessionID
-func (sid SessionID) String() string {
-	return string(sid)
-}
+//// string returns a string representation of the sessionID
+//func (sid SessionID) String() string {
+//	return string(sid)
+//}
 
 // GenerateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random
@@ -110,7 +110,8 @@ func (sid SessionID) String() string {
 // case the caller should not continue.
 func GenerateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
+	if _, err := rand.Read(b);
+	err != nil {
 		// Note that err == nil only if we read len(b) bytes.
 		return nil, err
 	} else {

@@ -14,6 +14,15 @@ type RedisStore struct {
 	SessionDuration time.Duration
 }
 
+// NewRedisClient takes an address and returns a the pointer of new client.
+func NewRedisClient(addr string) *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "",
+		DB:       0,
+	})
+}
+
 // NewRedisStore constructs a new RedisStore
 func NewRedisStore(client *redis.Client, sessionDuration time.Duration) *RedisStore {
 	// initialize and return a new RedisStore struct

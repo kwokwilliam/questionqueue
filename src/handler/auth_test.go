@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"assignments-kwokwilliam/servers/gateway/models/users"

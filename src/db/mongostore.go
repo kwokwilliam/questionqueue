@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"questionqueue/src/model"
 	"sync"
@@ -17,6 +18,10 @@ const (
 	collClass    = "class"
 	collTeacher  = "teacher"
 	collQuestion = "question"
+)
+
+var (
+	ErrEmailUsed = errors.New("this email address is already being used")
 )
 
 // MongoStore wraps the client to MongoDB with a struct.
@@ -179,8 +184,93 @@ Teacher
 */
 
 // InsertTeacher adds a given `model.Teacher` to MongoDB.
-func (ms *MongoStore) InsertTeacher(teacher model.NewTeacher) (*mongo.InsertOneResult, error) {
-	return insert(ms.GetCollection(dbName, collTeacher), teacher)
+func (ms *MongoStore) InsertTeacher(teacher *model.NewTeacher) (*mongo.InsertOneResult, error) {
+
+	// check existing teachers with the same email address
+	if teachers, err := ms.GetTeacherByEmail(teacher.Email); err != nil {
+		return nil, err
+	} else if len(teachers) > 0 {
+		return nil, ErrEmailUsed
+	}
+
+	type t struct {
+		Email        string `json:"email"`
+		Password     string `json:"password"`
+		FirstName    string `json:"first_name"`
+		LastName     string `json:"last_name"`
+	}
+
+	pwd, err := generatePassword(teacher.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return insert(ms.GetCollection(dbName, collTeacher), t{
+		Email:     teacher.Email,
+		Password:  pwd,
+		FirstName: teacher.FirstName,
+		LastName:  teacher.FirstName,
+	})
+}
+
+// generatePassword takes a plaintext and returns the salted hash
+func generatePassword(pwd string) (string, error) {
+
+	const cost = 13
+
+	if h, err := bcrypt.GenerateFromPassword([]byte(pwd), cost); err != nil {
+		return "", err
+	} else {
+		return string(h), nil
+	}
+}
+
+// UpdateTeacher takes a `model.TeacherUpdate` model, updates accordingly and returns results
+func (ms *MongoStore) UpdateTeacher(tu *model.TeacherUpdate) (*mongo.UpdateResult, error) {
+
+	const (
+		h  = "password_hash"
+		fn = "first_name"
+		ln = "last_name"
+	)
+
+	m := make(map[string]interface{})
+
+	if len(tu.Password) > 0 {
+		if pwd, err := generatePassword(tu.Password);
+		err != nil {
+			return nil, err
+		} else {
+			m[h] = pwd
+		}
+	}
+
+	if len(tu.FirstName) > 0 {
+		m[fn] = tu.FirstName
+	}
+
+	if len(tu.LastName) > 0 {
+		m[ln] = tu.LastName
+	}
+
+	return ms.GetCollection(dbName, collQuestion).
+		// use UpdateMany() instead of UpdateOne() since only one result should be matched
+		UpdateMany(nil,
+			bson.M{
+				"email":  bson.M{"$eq": tu.Email}},
+			bson.M{
+				"$set": m},
+			options.Update().SetBypassDocumentValidation(false))
+}
+
+// GetTeacherByEmail gets teacher profile from MongoDB by taking an email address.
+func (ms *MongoStore) GetTeacherByEmail(email string) ([]*model.Teacher, error) {
+	if cursor, err := ms.GetCollection(dbName, collQuestion).
+		Find(nil, bson.M{"email": bson.M{"$eq": email}}, nil); err != nil {
+		return nil, err
+	} else {
+		return scanTeacher(cursor), nil
+	}
 }
 
 // GetAllTeacher returns all teacher documents from MongoDB.
