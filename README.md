@@ -33,11 +33,11 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 
 #### Endpoints
 
-`/v1/student`: student control - GETting current queue position; POSTing new questions and enqueue.
-* `GET`: Get number of people in the queue and current position of active user
-  * `200`; `application/json`: Successfully retrieves queue information and encodes queuing status in the body.
-  * `401`: Cannot verify _student_ session ID or no _student_ session ID is provided.
-  * `500`: Internal server error.
+`/v1/student`: student control - GETting current queue position; POSTing new questions and enqueue. Student provides student id as query parameter `studentid`.
+~~* `GET`: Get number of people in the queue and current position of active user~~
+  ~~`200`; `application/json`: Successfully retrieves queue information and encodes queuing status in the body.~~
+  ~~`401`: Cannot verify _student_ session ID or no _student_ session ID is provided.~~
+  ~~`500`: Internal server error.~~~~ // Took this out because this is covered by the websocket - wk
 * `POST`; `application/json`: Post new question and enqueue the user.
   * `201`; `application/json`: Successfully adds the question and enqueues the user; returns encoded question in the body.
   * `415`: Cannot decode body or receives unsupported body.
@@ -89,7 +89,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 
-`/v1/queue`: websocket connection to notify users and teachers of the current queue.
+`/v1/queue`: websocket connection to notify users and teachers of the current queue. Student provides student id as query parameter `studentid`.
 * If the user connected with an auth token, we can assume the user is a teacher of a class, so when we emit the entire queue list to it and do so for subsequent users entering or leaving.
 * If no auth token is provided, we only give them the user hashes of people in line.
 
