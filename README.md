@@ -41,7 +41,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   
   ~~`401`: Cannot verify _student_ session ID or no _student_ session ID is provided.~~
   
-  ~~`500`: Internal server error.~~~~ // Took this out because this is covered by the websocket - wk
+  ~~`500`: Internal server error.~~ // Took this out because this is covered by the websocket - wk
   
 * `POST`; `application/json`: Post new question and enqueue the user.
   * `201`; `application/json`: Successfully adds the question and enqueues the user; returns encoded question in the body.
