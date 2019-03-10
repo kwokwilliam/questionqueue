@@ -36,8 +36,8 @@ func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Del("X-User")
 
-		studentID := r.URL.Query().Get("studentid")
-		r.Header.Add("X-User", `{"id": "`+studentID+`"}`)
+		identification := r.URL.Query().Get("identification")
+		r.Header.Add("X-User", `{"id": "`+identification+`"}`)
 		r.Host = targ.Host
 		r.URL.Host = targ.Host
 		r.URL.Scheme = targ.Scheme
@@ -90,7 +90,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when declaring a queue: %s", err)
 	}
-	slackQueueMessages, err := ch.Consume(
+	queueMessages, err := ch.Consume(
 		q.Name,
 		"",
 		false,
@@ -121,7 +121,7 @@ func main() {
 		addr = ":443"
 	}
 
-	go ctx.Notifier.SendMessagesToWebsockets(slackQueueMessages)
+	go ctx.Notifier.SendMessagesToWebsockets(queueMessages)
 
 	// set up proxies
 
