@@ -14,7 +14,7 @@ JSON_TYPE = 'application/json'
 TEXT_TYPE = 'text/plain'
 
 MONGO_URI = os.getenv(
-    "MONGO_URI", "mongodb://localhost:27017/questionqueue")
+    "MONGO_URI", "mongodb://localhost:27017/question_queue")
 REDIS_HOST = os.getenv("REDIS_HOST", '127.0.0.1')
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
@@ -26,7 +26,6 @@ mongo = PyMongo(app)
 db = mongo.db
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
-teachers = os.getenv("TEACHER_COLLECTION", 'teachers')
 queue = os.getenv("QUEUE_COLLECTION", 'queue')
 
 # Redis configuration
@@ -173,7 +172,9 @@ def queue_delete_handler(student_id):
 
         # Remove from redis
         try:
-            r.delete(student_id)
+            deleted = r.delete(student_id)
+            if deleted != 1:
+                return handle_db_error()
         except Exception:
             return handle_db_error()
 
