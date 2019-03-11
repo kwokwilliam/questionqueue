@@ -187,15 +187,17 @@ Teacher
 func (ms *MongoStore) InsertTeacher(teacher *model.NewTeacher) (*mongo.InsertOneResult, error) {
 
 	// check existing teachers with the same email address
-	if teachers, err := ms.GetTeacherByEmail(teacher.Email); err != nil {
+	teachers, err := ms.GetTeacherByEmail(teacher.Email)
+	if err != nil {
 		return nil, err
 	} else if len(teachers) > 0 {
 		return nil, ErrEmailUsed
 	}
 
+
 	type t struct {
 		Email        string `json:"email"`
-		Password     string `json:"password"`
+		PasswordHash string `json:"password_hash"`
 		FirstName    string `json:"first_name"`
 		LastName     string `json:"last_name"`
 	}
@@ -206,10 +208,10 @@ func (ms *MongoStore) InsertTeacher(teacher *model.NewTeacher) (*mongo.InsertOne
 	}
 
 	return insert(ms.GetCollection(dbName, collTeacher), t{
-		Email:     teacher.Email,
-		Password:  pwd,
-		FirstName: teacher.FirstName,
-		LastName:  teacher.FirstName,
+		Email:         teacher.Email,
+		PasswordHash:  pwd,
+		FirstName:     teacher.FirstName,
+		LastName:      teacher.LastName,
 	})
 }
 
@@ -265,7 +267,7 @@ func (ms *MongoStore) UpdateTeacher(tu *model.TeacherUpdate) (*mongo.UpdateResul
 
 // GetTeacherByEmail gets teacher profile from MongoDB by taking an email address.
 func (ms *MongoStore) GetTeacherByEmail(email string) ([]*model.Teacher, error) {
-	if cursor, err := ms.GetCollection(dbName, collQuestion).
+	if cursor, err := ms.GetCollection(dbName, collTeacher).
 		Find(nil, bson.M{"email": bson.M{"$eq": email}}, nil); err != nil {
 		return nil, err
 	} else {
@@ -289,7 +291,7 @@ func scanTeacher(cursor *mongo.Cursor) []*model.Teacher {
 	for cursor.Next(nil) {
 		t := model.Teacher{}
 		if err := cursor.Decode(&t); err != nil {
-			log.Printf("cannot unmarshal class: %v", err)
+			log.Printf("cannot unmarshal teacher: %v", err)
 			continue
 		} else {
 			teacher = append(teacher, &t)

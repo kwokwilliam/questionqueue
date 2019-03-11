@@ -3,22 +3,23 @@ package model
 import (
 	"errors"
 	"github.com/badoux/checkmail"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Teacher struct {
-	ID           interface{} `json:"id"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash,omitempty"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
+	ID           primitive.ObjectID `json:"id"                      bson:"_id"`
+	Email        string             `json:"email"                   bson:"email"`
+	PasswordHash string             `json:"password_hash,omitempty" bson:"passwordhash"`
+	FirstName    string             `json:"first_name"              bson:"firstname"`
+	LastName     string             `json:"last_name"               bson:"lastname"`
 }
 
 type TeacherUpdate struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
 type NewTeacher struct {
@@ -30,7 +31,7 @@ type NewTeacher struct {
 }
 
 type TeacherLogin struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -42,11 +43,7 @@ func (nt *NewTeacher) VerifyNewTeacher() error {
 	}
 
 	if err := checkmail.ValidateFormat(nt.Email); err != nil {
-		return err // ErrBadFormat
-	}
-
-	if err := checkmail.ValidateHost(nt.Email); err != nil {
-		return err // ErrUnresolvableHost
+		return errors.New("invalid email")
 	}
 
 	if len(nt.FirstName) == 0 {

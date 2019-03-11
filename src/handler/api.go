@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"log"
 	"net/http"
@@ -21,7 +22,7 @@ const (
 )
 
 func (ctx *Context) OkHandler(w http.ResponseWriter, r *http.Request) {
-	httpWriter(http.StatusOK, "connected", "text/plain", w)
+	httpWriter(http.StatusOK, []byte("connected"), "text/plain", w)
 	return
 }
 
@@ -51,7 +52,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 		res, err := ctx.MongoStore.InsertTeacher(nt)
 		if err == db.ErrEmailUsed {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		} else if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -59,7 +60,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		t := model.Teacher{
-			ID:        res.InsertedID,
+			ID:        res.InsertedID.(primitive.ObjectID),
 			Email:     nt.Email,
 			FirstName: nt.FirstName,
 			LastName:  nt.LastName,
@@ -67,7 +68,12 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 		js, _ := json.Marshal(t)
 
-		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, t, w)
+		// TODO: fix session state
+		// {
+		//    "sessionStart": "0001-01-01T00:00:00Z",
+		//    "state": null
+		//}
+		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, js, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -151,7 +157,9 @@ func (ctx *Context) TeacherProfileHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	httpWriter(http.StatusOK, currentState.Interface, "application/json", w)
+	b, _ := json.Marshal(currentState)
+
+	httpWriter(http.StatusOK, b, "application/json", w)
 }
 
 // TA/teacher session control
@@ -218,7 +226,7 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		httpWriter(http.StatusOK, "you have been signed out", "application/json", w)
+		httpWriter(http.StatusOK, []byte("you have been signed out"), "application/json", w)
 
 	default:
 		http.Error(w, ErrMethodNotAllowed, http.StatusMethodNotAllowed)
@@ -263,68 +271,63 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 // decoders; probably cannot be further refactored
 func decodeQuestion(d io.ReadCloser) (*model.Question, error) {
 	decoder := json.NewDecoder(d)
-	var i *model.Question
-
-	if err := decoder.Decode(i); err != nil {
+	var i model.Question
+	if err := decoder.Decode(&i); err != nil {
 		return nil, err
 	} else {
-		return i, nil
+		return &i, nil
 	}
 }
 
 func decodeNewTeacher(d io.ReadCloser) (*model.NewTeacher, error) {
 	decoder := json.NewDecoder(d)
-	var i *model.NewTeacher
-
-	if err := decoder.Decode(i); err != nil {
+	var i model.NewTeacher
+	if err := decoder.Decode(&i); err != nil {
 		return nil, err
 	} else {
-		return i, nil
+		return &i, nil
 	}
 }
 
-//func decodeTeacher(d io.ReadCloser) (*model.Teacher, error) {
-//	decoder := json.NewDecoder(d)
-//	var i *model.Teacher
-//
-//	if err := decoder.Decode(i); err != nil {
-//		return nil, err
-//	} else {
-//		return i, nil
-//	}
-//}
+func decodeTeacher(d io.ReadCloser) (*model.Teacher, error) {
+	decoder := json.NewDecoder(d)
+	var i model.Teacher
+	if err := decoder.Decode(&i); err != nil {
+		return nil, err
+	} else {
+		return &i, nil
+	}
+}
 
 func decodeTeacherUpdate(d io.ReadCloser) (*model.TeacherUpdate, error) {
 	decoder := json.NewDecoder(d)
-	var i *model.TeacherUpdate
-
-	if err := decoder.Decode(i); err != nil {
+	var i model.TeacherUpdate
+	if err := decoder.Decode(&i); err != nil {
 		return nil, err
 	} else {
-		return i, nil
+		return &i, nil
 	}
 }
 
 func decodeTeacherLogin(d io.ReadCloser) (*model.TeacherLogin, error) {
 	decoder := json.NewDecoder(d)
-	var i *model.TeacherLogin
-
-	if err := decoder.Decode(i); err != nil {
+	var i model.TeacherLogin
+	if err := decoder.Decode(&i); err != nil {
 		return nil, err
 	} else {
-		return i, nil
+		return &i, nil
 	}
 }
 
 // HttpWriter takes necessary arguments to write back to client.
-func httpWriter(statusCode int, body interface{}, contentType string, w http.ResponseWriter) {
+func httpWriter(statusCode int, body []byte, contentType string, w http.ResponseWriter) {
 
 	// check marshalling doesnt error out
-	marshaledBody, err := json.Marshal(body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	//marshaledBody, err := json.Marshal(body)
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//}
 
 	// write results
 	if len(contentType) > 0 {
@@ -335,8 +338,8 @@ func httpWriter(statusCode int, body interface{}, contentType string, w http.Res
 
 	w.WriteHeader(statusCode)
 
-	if len(marshaledBody) > 0 {
-		_, _ = w.Write(marshaledBody)
+	if len(body) > 0 {
+		_, _ = w.Write(body)
 	}
 }
 
