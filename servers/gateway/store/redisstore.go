@@ -21,7 +21,7 @@ func NewRedisStore(client *redis.Client, redisQueueName string) *RedisStore {
 // GetCurrentQueue gets the current queue from redis
 func (s *RedisStore) GetCurrentQueue() (*QuestionQueue, error) {
 	returnQueue := &QuestionQueue{}
-	getQueue := s.Client.Get("queue")
+	getQueue := s.Client.Get(s.redisQueueName)
 	if getQueue.Err() != nil {
 		return nil, getQueue.Err()
 	}

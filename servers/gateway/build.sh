@@ -5,10 +5,7 @@ export GOOS="linux"
 go build
 
 # Build the docker container
-docker build -t wkwok16/gateway .
-
-# build the database
-docker build -t wkwok16/gatewaydb ../db
+docker build -t questionqueue/gateway .
 
 # Delete go executable for linux
 go clean
