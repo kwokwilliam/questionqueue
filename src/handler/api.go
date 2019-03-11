@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"questionqueue/src/db"
 	"questionqueue/src/model"
+	"questionqueue/src/notifier"
 	"questionqueue/src/session"
-	"questionqueue/src/websocket"
 	"strings"
 )
 
@@ -19,6 +19,11 @@ const (
 	ErrMethodNotAllowed     = "method not allowed"
 	ErrUnauthorizedSession  = "unauthorized session"
 )
+
+func (ctx *Context) OkHandler(w http.ResponseWriter, r *http.Request) {
+	httpWriter(http.StatusOK, "connected", "text/plain", w)
+	return
+}
 
 // TA/teacher control
 func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +67,8 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 		js, _ := json.Marshal(t)
 
-		if err := ctx.SessionStore.Save(res.InsertedID, t); err != nil {
+		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, t, w)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -112,7 +118,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 		js, _ := json.Marshal(tu)
 
 		// TODO: `res.UpsertedID` should match whatever the original session ID is, *double check* redis
-		if err := ctx.SessionStore.Save(res.UpsertedID, tu); err != nil {
+		if err := ctx.SessionStore.Save(session.SessionID(res.UpsertedID.(string)), tu); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -245,7 +251,7 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := updateQueue(r, ctx, nq, websocket.QuestionNew); err != nil {
+	if err := updateQueue(r, ctx, nq, notifier.QuestionNew); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -323,6 +329,8 @@ func httpWriter(statusCode int, body interface{}, contentType string, w http.Res
 	// write results
 	if len(contentType) > 0 {
 		w.Header().Set("Content-Type", contentType)
+	} else {
+		w.Header().Set("Content-Type", "text/plain")
 	}
 
 	w.WriteHeader(statusCode)
@@ -345,7 +353,7 @@ func updateQueue(r *http.Request, ctx *Context, i interface{}, messageType strin
 	}
 
 	// create message and push to mq
-	ctx.Notifier.PublishMessage(&websocket.Message{
+	ctx.Notifier.PublishMessage(&notifier.Message{
 		Type:    messageType,
 		Content: i,
 		UserID:  sid,

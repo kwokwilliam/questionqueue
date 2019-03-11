@@ -28,24 +28,24 @@ func (ms *MemStore) Save(sid SessionID, state interface{}) error {
 	if nil != err {
 		return err
 	}
-	ms.entries.Set(sid.String(), j, cache.DefaultExpiration)
+	ms.entries.Set(sid.getRedisKey(), j, cache.DefaultExpiration)
 	return nil
 }
 
 // Get populates `sessionState` with the data previously saved
 // for the given SessionID
 func (ms *MemStore) Get(sid SessionID, state interface{}) error {
-	j, found := ms.entries.Get(sid.String())
+	j, found := ms.entries.Get(sid.getRedisKey())
 	if !found {
 		return ErrStateNotFound
 	}
 	// reset TTL
-	ms.entries.Set(sid.String(), j, 0)
+	ms.entries.Set(sid.getRedisKey(), j, 0)
 	return json.Unmarshal(j.([]byte), state)
 }
 
 // DeleteUser deletes all state data associated with the SessionID from the store.
 func (ms *MemStore) Delete(sid SessionID) error {
-	ms.entries.Delete(sid.String())
+	ms.entries.Delete(sid.getRedisKey())
 	return nil
 }

@@ -3,15 +3,20 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"log"
+	"net/http"
 	"os"
 	"questionqueue/src/db"
 	"questionqueue/src/handler"
+	"questionqueue/src/notifier"
 	"questionqueue/src/session"
-	"questionqueue/src/websocket"
 	"time"
 )
 
 func main() {
+
+	addr := os.Getenv("ADDR")
+	if len(addr) == 0 { addr = ":80" }
+
 	mongoAddr := os.Getenv("MONGOADDR")
 	if len(mongoAddr) == 0 { mongoAddr = "mongo:27017" }
 
@@ -31,7 +36,7 @@ func main() {
 
 	redis := session.NewRedisStore(session.NewRedisClient(redisAddr), time.Hour)
 
-	mq, err := websocket.NewRabbitMQ(rabbitAddr)
+	mq, err := notifier.NewRabbitMQ(rabbitAddr)
 	if err != nil {
 		log.Fatalf("cannot connect to RabbitMQ: %v", err)
 	}
@@ -46,18 +51,20 @@ func main() {
 		log.Fatalf("cannot declare queue: %v", err)
 	}
 
-	notifier := websocket.NewNotifier(ch, q)
+	n := notifier.NewNotifier(ch, q)
 
 	ctx := handler.Context{
 		Key:          sessionKey, 		// TODO: get a key
 		SessionStore: redis,
 		MongoStore:   ms,
 		Trie:         nil,
-		Notifier:     notifier,
+		Notifier:     n,
 	}
 
 	router := mux.NewRouter()
 
+	// test connection
+	router.HandleFunc("/test", ctx.OkHandler)
 	// Teacher control: POST; PATCH
 	router.HandleFunc("/v1/teacher", ctx.TeacherHandler)
 	// Specific TA/teacher control: GET
@@ -67,5 +74,13 @@ func main() {
 	router.HandleFunc("/v1/teacher/login", ctx.TeacherSessionHandler)
 	// Student control - POSTing new questions and enqueue: POST
 	router.HandleFunc("/v1/student", ctx.PostQuestionHandler)
+
+	log.Println("mongo:", mongoAddr)
+	log.Println("redis:",redisAddr)
+	log.Println("sessionKey:",sessionKey)
+	log.Println("mq:",rabbitAddr)
+
+	log.Printf("microservice is running at http://%s", addr)
+	log.Fatal(http.ListenAndServe(addr, handler.NewLogger(router)))
 }
 

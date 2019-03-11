@@ -28,7 +28,7 @@ const idLength = 32
 // +-----------------------------------------------------+
 // |...32 crypto random bytes...|HMAC hash of those bytes|
 // +-----------------------------------------------------+
-type SessionID interface{}
+type SessionID string
 
 // ErrInvalidID is returned when an invalid session id is passed to ValidateID()
 var ErrInvalidID = errors.New("invalid Session ID")
@@ -96,7 +96,6 @@ func ValidateID(id string, signingKey string) (SessionID, error) {
 	} else {
 		return InvalidSessionID, ErrInvalidID
 	}
-
 }
 
 //// string returns a string representation of the sessionID
