@@ -238,8 +238,8 @@ func (ms *MongoStore) UpdateTeacher(tu *model.TeacherUpdate) (*mongo.UpdateResul
 
 	m := make(map[string]interface{})
 
-	if len(tu.Password) > 0 {
-		if pwd, err := generatePassword(tu.Password);
+	if len(tu.NewPassword) > 0 {
+		if pwd, err := generatePassword(tu.NewPassword);
 		err != nil {
 			return nil, err
 		} else {

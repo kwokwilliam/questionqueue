@@ -29,6 +29,7 @@ func main() {
 	sessionKey := os.Getenv("SESSIONKEY")
 	if len(sessionKey) == 0 { sessionKey = "default_key" }
 
+	log.Println("mongoAddr:",mongoAddr)
 	ms, err := db.NewMongoStore(mongoAddr)
 	if err != nil {
 		log.Fatalf("cannot connect to MongoDB: %v", err)

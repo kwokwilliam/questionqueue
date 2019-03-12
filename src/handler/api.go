@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io"
 	"log"
@@ -12,13 +13,13 @@ import (
 	"questionqueue/src/notifier"
 	"questionqueue/src/session"
 	"strings"
+	"time"
 )
 
-const (
-	ErrUnsupportedMediaType = "unsupported media type"
-	ErrInvalidCredentials   = "invalid credentials"
-	ErrMethodNotAllowed     = "method not allowed"
-	ErrUnauthorizedSession  = "unauthorized session"
+var (
+	ErrUnsupportedMediaType = errors.New("unsupported media type")
+	ErrInvalidCredentials   = errors.New("invalid credentials")
+	ErrMethodNotAllowed     = errors.New("method not allowed")
 )
 
 func (ctx *Context) OkHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +35,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 
 		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			http.Error(w, ErrUnsupportedMediaType, http.StatusUnsupportedMediaType)
+			http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
 			return
 		}
 
@@ -66,31 +67,30 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 			LastName:  nt.LastName,
 		}
 
-		js, _ := json.Marshal(t)
+		newSessionState := session.State{
+			SessionStart: time.Now(),
+			Interface:    t,
+		}
 
-		// TODO: fix session state
-		// {
-		//    "sessionStart": "0001-01-01T00:00:00Z",
-		//    "state": null
-		//}
-		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, js, w)
+		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, newSessionState, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		httpWriter(http.StatusCreated, js, "application/json", w)
+		b, _ := json.Marshal(t)
+		httpWriter(http.StatusCreated, b, "application/json", w)
 		return
 
 	//  Update information for a TA/teacher.
 	case http.MethodPatch:
 
 		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			http.Error(w, ErrUnsupportedMediaType, http.StatusUnsupportedMediaType)
+			http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
 			return
 		}
 
-		currentState := &SessionState{}
+		currentState := &session.State{}
 		_, err := session.GetState(r, ctx.Key, ctx.SessionStore, currentState)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -104,14 +104,21 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// since `SessionState` can be any interface, force cast into `TeacherUpdate`
+		// since `State` can be any interface, force cast into `TeacherUpdate`
 		if tu.Email != currentState.Interface.(model.TeacherUpdate).Email {
 			http.Error(w, "you can only modify your profile", http.StatusForbidden)
 			return
 		}
 
+		// verify model
 		if err := tu.VerifyTeacherUpdate(); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// check password
+		if _, err = ctx.authenticate(tu.Email, tu.OldPassword); err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
 			return
 		}
 
@@ -123,7 +130,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 		js, _ := json.Marshal(tu)
 
-		// TODO: `res.UpsertedID` should match whatever the original session ID is, *double check* redis
+		// `res.UpsertedID` should match whatever the original session ID is, *double check* redis
 		if err := ctx.SessionStore.Save(session.SessionID(res.UpsertedID.(string)), tu); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -133,7 +140,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	default:
-		http.Error(w, ErrMethodNotAllowed, http.StatusMethodNotAllowed)
+		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 		return
 	}
 }
@@ -141,7 +148,7 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 func (ctx *Context) TeacherProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
-		http.Error(w, ErrMethodNotAllowed, http.StatusMethodNotAllowed)
+		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -150,10 +157,10 @@ func (ctx *Context) TeacherProfileHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, "you can only get your own profile", http.StatusForbidden)
 	}
 
-	currentState := &SessionState{}
+	currentState := &session.State{}
 	_, err := session.GetState(r, ctx.Key, ctx.SessionStore, currentState)
 	if err != nil {
-		http.Error(w, ErrUnauthorizedSession, http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -170,7 +177,7 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 	case http.MethodPost:
 
 		if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-			http.Error(w, ErrUnsupportedMediaType, http.StatusUnsupportedMediaType)
+			http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
 			return
 		}
 
@@ -180,32 +187,19 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		teachers, err := ctx.MongoStore.GetTeacherByEmail(tl.Email)
+		t, err := ctx.authenticate(tl.Email, tl.Password)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, ErrInvalidCredentials.Error(), http.StatusForbidden)
 			return
 		}
 
-		if len(teachers) == 1 {
-			http.Error(w, ErrInvalidCredentials, http.StatusForbidden)
-			return
+		newSessionState := session.State{
+			SessionStart: time.Now(),
+			Interface:    t,
 		}
+		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, newSessionState, w)
 
-		if len(teachers) > 1 {
-			log.Printf("got more than 1 matched users.\nemail: %v", tl.Email)
-			http.Error(w, ErrInvalidCredentials, http.StatusForbidden)
-		}
-
-		// check index 0 as there should only be one matched result
-		if err := teachers[0].Authenticate(tl.Password); err != nil {
-			http.Error(w, ErrInvalidCredentials, http.StatusForbidden)
-			return
-		}
-
-		js, _ := json.Marshal(teachers[0])
-
-		_, err = session.BeginSession(ctx.Key, ctx.SessionStore, js, w)
-
+		js, _ := json.Marshal(t)
 		httpWriter(http.StatusOK, js, "application/json", w)
 
 	// delete session
@@ -213,8 +207,8 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 
 		var err error
 
-		// `SessionState` is discarded
-		_, err = session.GetState(r, ctx.Key, ctx.SessionStore, &SessionState{})
+		// `State` is discarded
+		_, err = session.GetState(r, ctx.Key, ctx.SessionStore, &session.State{})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -229,7 +223,7 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 		httpWriter(http.StatusOK, []byte("you have been signed out"), "application/json", w)
 
 	default:
-		http.Error(w, ErrMethodNotAllowed, http.StatusMethodNotAllowed)
+		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -239,12 +233,12 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		http.Error(w, ErrUnsupportedMediaType, http.StatusUnsupportedMediaType)
+		http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
 
 	if r.Method != http.MethodPost {
-		http.Error(w, ErrMethodNotAllowed, http.StatusMethodNotAllowed)
+		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -363,4 +357,30 @@ func updateQueue(r *http.Request, ctx *Context, i interface{}, messageType strin
 	})
 
 	return nil
+}
+
+// Authenticate searches existing teachers in the mongo,
+// then authenticated against the provided password,
+// finally returns the pointer of the matched user.
+func (ctx *Context) authenticate(email, password string) (*model.Teacher, error) {
+	teachers, err := ctx.MongoStore.GetTeacherByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(teachers) == 0 {
+		return nil, ErrInvalidCredentials
+	}
+
+	if len(teachers) > 1 {
+		log.Printf("got more than 1 matched users.\nemail: %v", email)
+		return nil, ErrInvalidCredentials
+	}
+
+	// check index 0 as there should only be one matched result
+	if err := teachers[0].Authenticate(password); err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return teachers[0], nil
 }

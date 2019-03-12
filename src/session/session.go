@@ -18,7 +18,7 @@ var ErrInvalidScheme = errors.New("authorization scheme not supported")
 
 // BeginSession creates a new SessionID, saves the `sessionState` to the store, adds an
 // Authorization header to the response with the SessionID, and returns the new SessionID
-func BeginSession(signingKey string, store Store, sessionState interface{}, w http.ResponseWriter) (SessionID, error) {
+func BeginSession(signingKey string, store Store, sessionState State, w http.ResponseWriter) (SessionID, error) {
 	// - create a new SessionID
 	// - save the sessionState to the store
 	//   where "<sessionID>" is replaced with the newly-created SessionID
@@ -30,11 +30,12 @@ func BeginSession(signingKey string, store Store, sessionState interface{}, w ht
 	if err != nil {
 		return InvalidSessionID, err
 	}
+
 	if err := store.Save(sid, sessionState); err != nil {
 		return InvalidSessionID, err
 	}
 
-	w.Header().Add("Authorization", "Bearer "+sid.getRedisKey())
+	w.Header().Add("Authorization", "Bearer "+string(sid))
 	return sid, nil
 }
 
@@ -110,3 +111,20 @@ func EndSession(r *http.Request, signingKey string, store Store) (SessionID, err
 
 	return sid, nil
 }
+
+// AddToQueue retrieves current questions in queue in the memstore and
+// adds the given question to the queue
+// TODO
+//func AddToQueue(store Store, question *model.Question) error {
+//
+//	currentState := &.State{}
+//	if err := store.Get("queue", currentState); err != nil {
+//		return err
+//	}
+//
+//	if err := store.Save("queue", question); err != nil {
+//		return err
+//	} else {
+//		return nil
+//	}
+//}

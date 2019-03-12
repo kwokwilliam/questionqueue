@@ -73,7 +73,6 @@ func (rs *RedisStore) Get(sid SessionID, sessionState interface{}) error {
 	if s, err := pipe.Result(); err != nil {
 		return err
 	} else {
-
 		if err = json.Unmarshal([]byte(s), sessionState); err != nil {
 			// cannot unmarshal
 			return err
