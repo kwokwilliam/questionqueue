@@ -50,6 +50,28 @@ func (rs *RedisStore) Save(sid SessionID, sessionState interface{}) error {
 	return nil
 }
 
+func (rs *RedisStore) SetQueue(sid SessionID, sessionState interface{}) error {
+
+	pipeline := rs.Client.Pipeline()
+	// do not expire queue
+	pipe := pipeline.Set(sid.getRedisKey(), sessionState, 0)
+
+	if _, err := pipeline.Exec(); err != nil {
+		return err
+	}
+
+	if s, err := pipe.Result(); err != nil {
+		return err
+	} else {
+		if err = json.Unmarshal([]byte(s), sessionState); err != nil {
+			// cannot unmarshal
+			return err
+		} else {
+			return nil
+		}
+	}
+}
+
 // Get populates `sessionState` with the data previously saved
 // for the given SessionID
 func (rs *RedisStore) Get(sid SessionID, sessionState interface{}) error {

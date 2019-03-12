@@ -264,6 +264,7 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 
 // PostQuestionHandler posts new question to mongo and enqueues the question to redis in the format of
 // {queue : [question1, question2, ..., questionN] }
+// TODO: queue is stored under literal `sid:queue` in redis (spec WIP)
 // TODO: redis operations
 func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -288,7 +289,7 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := updateQueue(r, ctx, nq, notifier.QuestionNew); err != nil {
+	if err := updateQueue(ctx, nq, notifier.QuestionNew); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -313,22 +314,32 @@ func httpWriter(statusCode int, body []byte, contentType string, w http.Response
 }
 
 // UpdateQueue commits an update to Redis and MessageQueue
-func updateQueue(r *http.Request, ctx *Context, i interface{}, messageType string) error {
-	// save to redis
-	sid, err := session.GetSessionID(r, ctx.Key)
+func updateQueue(ctx *Context, nq interface{}, messageType string) error {
+
+	// get from, update and save to redis
+	currentState := &session.State{}
+	currentQueue := ctx.SessionStore.Get("queue", currentState)
+
+	// json array of questions
+	// TODO: marshal json array into struct slice
+	currentQuestion, err := json.Marshal(currentState.Interface)
 	if err != nil {
 		return err
 	}
 
-	if err := ctx.SessionStore.Save(sid, i); err != nil {
+	marshaledNQ, _ := json.Marshal(nq)
+
+
+
+	if err := ctx.SessionStore.SetQueue("queue", nq); err != nil {
 		return err
 	}
 
 	// create message and push to mq
 	ctx.Notifier.PublishMessage(&notifier.Message{
 		Type:    messageType,
-		Content: i,
-		UserID:  sid,
+		Content: nq,
+		UserID:  "queue",
 	})
 
 	return nil

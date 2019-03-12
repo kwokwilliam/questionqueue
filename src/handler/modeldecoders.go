@@ -17,6 +17,12 @@ func decodeQuestion(d io.ReadCloser) (*model.Question, error) {
 	}
 }
 
+func decodeQuestions(i interface{}) ([]*model.Question, error) {
+	var qs []*model.Question
+
+	// TODO: marshal list json in to list struct
+}
+
 func decodeNewTeacher(d io.ReadCloser) (*model.NewTeacher, error) {
 	decoder := json.NewDecoder(d)
 	var i model.NewTeacher
