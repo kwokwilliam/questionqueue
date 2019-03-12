@@ -4,6 +4,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import crypto from 'crypto';
 import cookies from 'browser-cookies';
+import './bootstrap.css';
 
 // Print version number
 console.log("v1.0.0");
