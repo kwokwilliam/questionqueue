@@ -17,7 +17,7 @@ export default class TutorQStudent extends Component {
         this.state = {
             page: 0,
             name: cookies.get('tutorqname') || '',
-            classNumber: cookies.get('tutorqclassnumber') ? Number(cookies.get('tutorqclassnumber')) : null,
+            classNumber: cookies.get('tutorqclassnumber') ? cookies.get('tutorqclassnumber') : null,
             problemCategory: null,
             problemDescription: '',
             location: null,
@@ -27,7 +27,7 @@ export default class TutorQStudent extends Component {
             positionInQueue: -1,
             inQueue: false,
             userInQueueKey: '',
-            sentToFirebase: false,
+            sentDataOut: false,
             classes: [],
             topics: {}
         }
@@ -41,6 +41,8 @@ export default class TutorQStudent extends Component {
         this.setState({ removeButtonLoading: true });
 
         // Call remove user from queue endpoint
+
+        // TODO
     }
 
     componentDidMount = async () => {
@@ -56,54 +58,60 @@ export default class TutorQStudent extends Component {
 
 
         // ACTUAL CODE
-        const { URL, ClassControl } = Endpoints;
-        const fetchClasses = await fetch(URL + ClassControl);
-        const classes = await fetchClasses.json()
+        // Get all the classes and topics and set that.
+        const { URL, ClassControl, QueueWebSocket } = Endpoints;
+        try {
+            const fetchClasses = await fetch(URL + ClassControl);
+            const classes = await fetchClasses.json()
+            const classTitles = classes.map(d => d.class_number)
+            const topics = {};
+            classes.forEach(d => {
+                const classNumber = d.class_number;
+                topics[classNumber] = d.question_type;
+            });
+            this.setState({
+                classes: classTitles,
+                topics
+            });
+        } catch (e) {
+            // this.setError(e)
+        }
 
-        /**
-         * {
-         *      class_number: class_number,
-         *      question_type: [ types ]
-         * }
-         */
+        this.queueSocket = new WebSocket(`${QueueWebSocket}?identification=${this.id}`);
 
+        this.queueSocket.onopen = () => {
+            console.log("Connected");
+        }
 
-        // connect to websocket and check out userInQueueKey, we assume that it is added in order in redis
-
-        // this.idToQueueInfoRef = firebase.database().ref(`/tutorq/idToQueueInfo/${this.id}`);
-        // this.idToQueueInfoRef.on('value', (snap) => {
-        //     let val = snap.val() || {};
-        //     let { queueKey } = val;
-        //     this.setState({ userInQueueKey: queueKey });
-        // })
-
-        // this.queueRef = firebase.database().ref('/tutorq/inqueue')
-
-        // this.queueRef.on('value', (snap) => {
-        //     let queue = snap.val() || {};
-        //     let queueArr = Object.keys(queue).sort((a, b) => {
-        //         return queue[a].timestamp - queue[b].timestamp;
-        //     });
-        //     let userInQueue = queueArr.indexOf(this.state.userInQueueKey);
-        //     if (userInQueue > -1) {
-        //         this.setState({
-        //             inQueue: true,
-        //             queueLength: queueArr.length,
-        //             positionInQueue: userInQueue + 1,
-        //             sentToFirebase: false,
-        //         });
-        //     } else {
-        //         this.setState({
-        //             inQueue: false,
-        //             queueLength: queueArr.length,
-        //             positionInQueue: -1
-        //         })
-        //     }
-        // });
+        this.queueSocket.onmessage = (event) => {
+            const { data } = event;
+            const parsedData = JSON.parse(data);
+            const { queue } = parsedData;
+            let userInQueue = -1;
+            queue.forEach((student, i) => {
+                if (student.id === this.id) {
+                    userInQueue = i;
+                }
+            });
+            if (userInQueue > -1) {
+                this.setState({
+                    inQueue: true,
+                    queueLength: queue.length,
+                    positionInQueue: userInQueue + 1,
+                    sentDataOut: false,
+                });
+            } else {
+                this.setState({
+                    inQueue: false,
+                    queueLength: queue.length,
+                    positionInQueue: -1
+                })
+            }
+        }
     }
 
     componentWillUnmount = () => {
-        // turn off websocket connection here
+        this.queueSocket.close();
     }
 
     change = (e) => {
@@ -193,30 +201,37 @@ export default class TutorQStudent extends Component {
         return true;
     }
 
-    sendData = () => {
-        // if (this.checkValidityBeforeSendingRequest()) {
-        //     let { name, classNumber, problemCategory, problemDescription, location } = this.state;
-        //     // console.log(classNumber);
-        //     cookies.set('tutorqname', name);
-        //     cookies.set('tutorqclassnumber', classNumber.toString());
-        //     let queueKey = this.queueRef.push({
-        //         classNumber,
-        //         problemCategory,
-        //         problemDescription,
-        //         location,
-        //         // timestamp: firebase.database.ServerValue.TIMESTAMP,
-        //     }, (e) => {
-        //         if (e) {
-        //             this.setError(e.message);
-        //         }
-        //     }).key;
+    sendData = async () => {
+        if (this.checkValidityBeforeSendingRequest()) {
+            console.log("abc")
+            let { name, classNumber, problemCategory, problemDescription, location } = this.state;
+            cookies.set("tutorqname", name);
+            cookies.set("tutorqclassnumber", classNumber.toString());
 
-        //     if (queueKey) {
-        //         firebase.database().ref(`/tutorq/idToQueueInfo/${this.id}`).set({ name, queueKey });
-        //     }
-        // }
-
-        // // TODO: set a loading spinner!
+            const { URL, Student } = Endpoints;
+            const response = await fetch(URL + Student, {
+                method: "POST",
+                body: JSON.stringify({
+                    id: this.id,
+                    name,
+                    class: classNumber,
+                    topic: problemCategory,
+                    problem: problemDescription,
+                    "loc.x": location.xPercentage,
+                    "loc.y": location.yPercentage,
+                    // createdAt: Date.now()
+                }),
+                headers: new Headers({
+                    "Content-Type": "application/json"
+                })
+            });
+            if (response.status >= 300) {
+                const error = await response.text();
+                this.setError(error);
+                return;
+            }
+            // otherwise on success a websocket message should be received.
+        }
     }
 
     render() {
@@ -337,8 +352,3 @@ export default class TutorQStudent extends Component {
         </>
     }
 }
-
-        // tutorq
-        //     inprogress
-        //     helped
-//     inqueue // remove from queue when in progress
