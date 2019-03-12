@@ -57,7 +57,15 @@ export default class TutorQStudent extends Component {
 
         // ACTUAL CODE
         const { URL, ClassControl } = Endpoints;
-        const fetchClasses = fetch(URL + ClassControl);
+        const fetchClasses = await fetch(URL + ClassControl);
+        const classes = await fetchClasses.json()
+
+        /**
+         * {
+         *      class_number: class_number,
+         *      question_type: [ types ]
+         * }
+         */
 
 
         // connect to websocket and check out userInQueueKey, we assume that it is added in order in redis

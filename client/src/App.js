@@ -20,13 +20,15 @@ class App extends Component {
         const { id } = this.state;
         return (
             <>
-                <Router>
-                    <Switch>
-                        <Route exact path="/" component={() => <TutorQStudent />} />
-                        <Route exact path="/tutorqadmin" component={() => <TutorQAdmin />} />
-                        <Route render={() => <div style={{ margin: 20 }}>Error: Page not found :(</div>} />
-                    </Switch>
-                </Router>
+                <div style={{ margin: 10 }}>
+                    <Router>
+                        <Switch>
+                            <Route exact path="/" component={() => <TutorQStudent />} />
+                            <Route exact path="/tutorqadmin" component={() => <TutorQAdmin />} />
+                            <Route render={() => <div style={{ margin: 20 }}>Error: Page not found :(</div>} />
+                        </Switch>
+                    </Router>
+                </div>
             </>
         );
     }
