@@ -122,12 +122,9 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: updating doesnt work
-		if res, err := ctx.MongoStore.UpdateTeacher(tu); err != nil {
+		if _, err := ctx.MongoStore.UpdateTeacher(tu); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-		} else {
-			log.Println("upsertedID:",res.UpsertedID)
 		}
 
 		// retrieve updated record
