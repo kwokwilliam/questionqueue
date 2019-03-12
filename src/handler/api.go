@@ -168,21 +168,38 @@ func (ctx *Context) TeacherProfileHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id := mux.Vars(r)["id"]
-	if id != "me" {
-		http.Error(w, "you can only get your own profile", http.StatusForbidden)
+	switch mux.Vars(r)["id"] {
+	// get current user profile
+	case "me":
+		currentState := &session.State{}
+		_, err := session.GetState(r, ctx.Key, ctx.SessionStore, currentState)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		b, _ := json.Marshal(currentState)
+
+		httpWriter(http.StatusOK, b, "application/json", w)
+
+	// get all teachers, they are authorized to do so
+	case "all":
+		// current state discarded
+		_, err := session.GetState(r, ctx.Key, ctx.SessionStore, &session.State{})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		teachers, err := ctx.MongoStore.GetAllTeacher()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		b, _ := json.Marshal(teachers)
+		httpWriter(http.StatusOK, b, "application/json", w)
 	}
-
-	currentState := &session.State{}
-	_, err := session.GetState(r, ctx.Key, ctx.SessionStore, currentState)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	b, _ := json.Marshal(currentState)
-
-	httpWriter(http.StatusOK, b, "application/json", w)
 }
 
 // TA/teacher session control

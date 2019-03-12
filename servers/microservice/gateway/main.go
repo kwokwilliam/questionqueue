@@ -71,7 +71,7 @@ func main() {
 	// TA/teacher session control: POST, DELETE
 	router.HandleFunc("/v1/teacher/login", ctx.TeacherSessionHandler)
 	// Specific TA/teacher control: GET
-	// only accepts `me`
+	// only accepts `me` or `all`
 	router.HandleFunc("/v1/teacher/{id}", ctx.TeacherProfileHandler)
 	// Student control - POSTing new questions and enqueue: POST
 	router.HandleFunc("/v1/student", ctx.PostQuestionHandler)
