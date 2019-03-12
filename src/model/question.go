@@ -14,7 +14,6 @@ type Question struct {
 	X           float64   `json:"x_loc"`
 	Y           float64   `json:"y_loc"`
 	CreatedAt   time.Time `json:"created_at"`
-	ResolvedAt  time.Time `json:"resolved_at"`
 }
 
 //type NewQuestion struct {
@@ -67,10 +66,9 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 		X:           x,
 		Y:           y,
 		CreatedAt:   time.Now(),
-		ResolvedAt:  time.Time{},
 	}, nil
 }
 
-func (q *Question) QuestionResolved() bool {
-	return q.ResolvedAt != time.Time{}
-}
+//func (q *Question) QuestionResolved() bool {
+//	return q.ResolvedAt != time.Time{}
+//}

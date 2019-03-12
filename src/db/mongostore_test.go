@@ -19,12 +19,12 @@ func ExampleMongoStore_GetActiveQuestions() {
 	}
 }
 
-func ExampleMongoStore_SolveQuestion() {
-	const name = "someone"
-	res, err := ms.SolveQuestion(name)
-	if err != nil {
-		log.Printf("cannot update question belongs to %v: %v", name, err)
-	} else {
-		log.Println(res.ModifiedCount)
-	}
-}
+//func ExampleMongoStore_SolveQuestion() {
+//	const name = "someone"
+//	res, err := ms.SolveQuestion(name)
+//	if err != nil {
+//		log.Printf("cannot update question belongs to %v: %v", name, err)
+//	} else {
+//		log.Println(res.ModifiedCount)
+//	}
+//}

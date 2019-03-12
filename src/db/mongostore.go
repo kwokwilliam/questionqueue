@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -150,18 +151,19 @@ func (ms *MongoStore) InsertQuestion(question *model.Question) (*mongo.InsertOne
 	return insert(ms.GetCollection(dbName, collQuestion), question)
 }
 
+// Note: decommissioned on 3/12 as questions are maintained in redis
 // SolveQuestion takes a `question.belongsTo` and updates `question.resolvedAt` property to current time.
-func (ms *MongoStore) SolveQuestion(belongsTo string) (*mongo.UpdateResult, error) {
-	return ms.GetCollection(dbName, collQuestion).
-		// use UpdateMany() instead of UpdateOne() since only one result should be matched
-		UpdateMany(nil,
-			bson.M{
-				"belongsto":  bson.M{"$eq": belongsTo},
-				"resolvedat": bson.M{"$eq": time.Time{}}},
-			bson.M{
-				"$set": bson.M{"resolvedat": time.Now()}},
-			options.Update().SetBypassDocumentValidation(false))
-}
+//func (ms *MongoStore) SolveQuestion(belongsTo string) (*mongo.UpdateResult, error) {
+//	return ms.GetCollection(dbName, collQuestion).
+//		// use UpdateMany() instead of UpdateOne() since only one result should be matched
+//		UpdateMany(nil,
+//			bson.M{
+//				"belongsto":  bson.M{"$eq": belongsTo},
+//				"resolvedat": bson.M{"$eq": time.Time{}}},
+//			bson.M{
+//				"$set": bson.M{"resolvedat": time.Now()}},
+//			options.Update().SetBypassDocumentValidation(false))
+//}
 
 // ScanQuestion takes a `mongo.Cursor`, parses and return a slice of all classes found.
 func scanQuestion(cursor *mongo.Cursor) []*model.Question {
@@ -231,37 +233,42 @@ func generatePassword(pwd string) (string, error) {
 func (ms *MongoStore) UpdateTeacher(tu *model.TeacherUpdate) (*mongo.UpdateResult, error) {
 
 	const (
-		h  = "password_hash"
-		fn = "first_name"
-		ln = "last_name"
+		h  = "passwordhash"
+		fn = "firstname"
+		ln = "lastname"
 	)
 
-	m := make(map[string]interface{})
+	idDoc := bson.M{"email" : tu.Email}
+	newDoc := bson.M{}
 
 	if len(tu.NewPassword) > 0 {
 		if pwd, err := generatePassword(tu.NewPassword);
 		err != nil {
 			return nil, err
 		} else {
-			m[h] = pwd
+			newDoc[h] = pwd
 		}
 	}
 
 	if len(tu.FirstName) > 0 {
-		m[fn] = tu.FirstName
+		newDoc[fn] = tu.FirstName
 	}
 
 	if len(tu.LastName) > 0 {
-		m[ln] = tu.LastName
+		newDoc[ln] = tu.FirstName
 	}
 
-	return ms.GetCollection(dbName, collQuestion).
-		UpdateOne(nil,
-			bson.M{
-				"email":  bson.M{"$eq": tu.Email}},
-			bson.M{
-				"$set": m},
-			options.Update().SetBypassDocumentValidation(false))
+	cursor, err := ms.GetCollection(dbName, collTeacher).Find(nil, idDoc)
+	if err != nil {
+		log.Println("got err when finding:",err)
+	} else {
+		q := scanTeacher(cursor)
+		b, _ := json.Marshal(q)
+		log.Println(string(b))
+	}
+
+	return ms.GetCollection(dbName, collTeacher).
+		UpdateOne(nil, idDoc, bson.M{"$set" : newDoc})
 }
 
 // GetTeacherByEmail gets teacher profile from MongoDB by taking an email address.

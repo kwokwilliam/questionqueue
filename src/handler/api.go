@@ -248,7 +248,9 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-// Post new question and enqueue the user.
+// PostQuestionHandler posts new question to mongo and enqueues the question to redis in the format of
+// {queue : [question1, question2, ..., questionN] }
+// TODO: redis operations
 func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
