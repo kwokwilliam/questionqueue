@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"io"
 	"log"
 	"net/http"
 	"questionqueue/src/db"
@@ -262,68 +261,8 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 	return
 }
 
-// decoders; probably cannot be further refactored
-func decodeQuestion(d io.ReadCloser) (*model.Question, error) {
-	decoder := json.NewDecoder(d)
-	var i model.Question
-	if err := decoder.Decode(&i); err != nil {
-		return nil, err
-	} else {
-		return &i, nil
-	}
-}
-
-func decodeNewTeacher(d io.ReadCloser) (*model.NewTeacher, error) {
-	decoder := json.NewDecoder(d)
-	var i model.NewTeacher
-	if err := decoder.Decode(&i); err != nil {
-		return nil, err
-	} else {
-		return &i, nil
-	}
-}
-
-func decodeTeacher(d io.ReadCloser) (*model.Teacher, error) {
-	decoder := json.NewDecoder(d)
-	var i model.Teacher
-	if err := decoder.Decode(&i); err != nil {
-		return nil, err
-	} else {
-		return &i, nil
-	}
-}
-
-func decodeTeacherUpdate(d io.ReadCloser) (*model.TeacherUpdate, error) {
-	decoder := json.NewDecoder(d)
-	var i model.TeacherUpdate
-	if err := decoder.Decode(&i); err != nil {
-		return nil, err
-	} else {
-		return &i, nil
-	}
-}
-
-func decodeTeacherLogin(d io.ReadCloser) (*model.TeacherLogin, error) {
-	decoder := json.NewDecoder(d)
-	var i model.TeacherLogin
-	if err := decoder.Decode(&i); err != nil {
-		return nil, err
-	} else {
-		return &i, nil
-	}
-}
-
 // HttpWriter takes necessary arguments to write back to client.
 func httpWriter(statusCode int, body []byte, contentType string, w http.ResponseWriter) {
-
-	// check marshalling doesnt error out
-	//marshaledBody, err := json.Marshal(body)
-	//if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
-
-	// write results
 	if len(contentType) > 0 {
 		w.Header().Set("Content-Type", contentType)
 	} else {
