@@ -15,7 +15,7 @@ TEXT_TYPE = 'text/plain'
 
 MONGO_URI = os.getenv(
     "MONGO_URI", "mongodb://localhost:27017/question_queue")
-REDIS_HOST = os.getenv("REDIS_HOST", '127.0.0.1')
+REDIS_HOST = os.getenv("REDIS_HOST", 'localhost')
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
 QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
 RABBIT_HOST = os.environ.get('RABBIT_HOST', "localhost")
@@ -44,11 +44,6 @@ mq_channel.queue_declare(queue=QUEUE_NAME, durable=True)
 # GET a current class or POST a new class
 @app.route('/v1/class', methods=['GET', 'POST'])
 def class_handler():
-    # Check for authentication
-    auth = check_auth(request)
-    if auth != None:
-        return auth
-
     if request.method == 'GET':
         all_classes = []
         try:
@@ -63,6 +58,11 @@ def class_handler():
         return resp
 
     elif request.method == 'POST':
+        # Check for authentication
+        auth = check_auth(request)
+        if auth != None:
+            return auth
+
         # Check content type
         content = check_content_type(request)
         if content != None:
