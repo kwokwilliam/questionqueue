@@ -8,6 +8,7 @@ import {
 import cookies from 'browser-cookies';
 import TutorQStudent from './Pages/TutorQ/Student/TutorQStudent';
 import './App.css';
+import TutorQAdmin from './Pages/TutorQ/Admin/TutorQAdmin';
 
 
 class App extends Component {
@@ -22,6 +23,8 @@ class App extends Component {
                 <Router>
                     <Switch>
                         <Route exact path="/" component={() => <TutorQStudent />} />
+                        <Route exact path="/tutorqadmin" component={() => <TutorQAdmin />} />
+                        <Route render={() => <div style={{ margin: 20 }}>Error: Page not found :(</div>} />
                     </Switch>
                 </Router>
             </>

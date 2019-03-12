@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
-import firebase from 'firebase/app';
 import { Button } from 'reactstrap';
 import { Route } from 'react-router-dom';
 import Spinner from 'react-loader-spinner';
-import 'firebase/auth';
-import 'firebase/functions';
 import Loadable from 'react-loadable';
 
 const Loading = () => <div><Spinner
@@ -34,8 +31,6 @@ const TutorQAdminSeatingDistribution = Loadable({
     loading: Loading,
 });
 
-let provider = new firebase.auth.GoogleAuthProvider();
-const isUserAdmin = firebase.functions().httpsCallable('isUserAdmin');
 
 export default class TutorQAdmin extends Component {
     constructor(props) {
@@ -67,19 +62,19 @@ export default class TutorQAdmin extends Component {
     }
 
     componentWillMount() {
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                isUserAdmin().then(r => {
-                    if (r.data) {
-                        this.setState({ admin: true, user, loading: false });
-                    } else {
-                        this.setState({ admin: false, user, loading: false });
-                    }
-                })
-            } else {
-                this.setState({ user: null, loading: false });
-            }
-        });
+        // firebase.auth().onAuthStateChanged(user => {
+        //     if (user) {
+        //         isUserAdmin().then(r => {
+        //             if (r.data) {
+        //                 this.setState({ admin: true, user, loading: false });
+        //             } else {
+        //                 this.setState({ admin: false, user, loading: false });
+        //             }
+        //         })
+        //     } else {
+        //         this.setState({ user: null, loading: false });
+        //     }
+        // });
     }
 
     render() {
@@ -93,7 +88,7 @@ export default class TutorQAdmin extends Component {
 
             {!loading && !user && <div>
                 <Button onClick={() => {
-                    firebase.auth().signInWithRedirect(provider);
+                    // firebase.auth().signInWithRedirect(provider);
                 }} style={{ backgroundColor: "#005696" }}>Sign in with Google</Button>
             </div>}
 
@@ -107,7 +102,7 @@ export default class TutorQAdmin extends Component {
             {user && !admin && <>
                 <h1>You are not permitted to view this page.</h1>
                 <Button onClick={() => {
-                    firebase.auth().signOut();
+                    // firebase.auth().signOut();
                 }}>
                     Sign out
                 </Button>

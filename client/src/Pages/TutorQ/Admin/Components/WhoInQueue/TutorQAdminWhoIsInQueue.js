@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import firebase from 'firebase/app';
-import 'firebase/database';
 import BackToHubButton from '../BackToHubButton';
 import { CardDeck } from 'reactstrap';
 import PersonInQueue from './Components/PersonInQueue';
@@ -10,21 +8,21 @@ export default function TutorQAdminWhoIsInQueue() {
     const [mapping, setMapping] = useState({});
 
     useEffect(() => {
-        const queueRef = firebase.database().ref('/tutorq/inqueue');
-        queueRef.on('value', (snap) => {
-            let queue = snap.val() || {};
-            setQueue(queue);
-        });
+        // const queueRef = firebase.database().ref('/tutorq/inqueue');
+        // queueRef.on('value', (snap) => {
+        //     let queue = snap.val() || {};
+        //     setQueue(queue);
+        // });
 
-        const mappingRef = firebase.database().ref('/tutorq/idToQueueInfo');
-        mappingRef.on('value', (snap) => {
-            let mapping = snap.val() || {};
-            setMapping(mapping);
-        })
-        return () => {
-            queueRef.off();
-            mappingRef.off();
-        }
+        // const mappingRef = firebase.database().ref('/tutorq/idToQueueInfo');
+        // mappingRef.on('value', (snap) => {
+        //     let mapping = snap.val() || {};
+        //     setMapping(mapping);
+        // })
+        // return () => {
+        //     queueRef.off();
+        //     mappingRef.off();
+        // }
     }, []);
 
     // creates a clone of the current queue

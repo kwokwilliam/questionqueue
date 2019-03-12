@@ -1,7 +1,4 @@
 import React, { Component } from 'react';
-import firebase from 'firebase/app';
-import 'firebase/database';
-import 'firebase/functions';
 import {
     Card, CardText, CardBody, CardTitle, CardSubtitle, Button,
     Modal, ModalHeader, ModalFooter
@@ -17,9 +14,6 @@ const Loading = () => <div><Spinner
     width="100"
 /></div>;
 
-const giveTutorStudent = firebase.functions().httpsCallable('giveTutorStudent');
-const finishTutorStudent = firebase.functions().httpsCallable('finishTutorStudent');
-
 export default class TutorQAdminAdminQueue extends Component {
     constructor(props) {
         super(props);
@@ -34,27 +28,27 @@ export default class TutorQAdminAdminQueue extends Component {
     }
 
     componentDidMount() {
-        this.inprogressRef = firebase.database().ref(`/tutorq/inprogress/${this.state.uid}`);
-        this.inprogressRef.on('value', (snap) => {
-            const student = snap.val();
-            let currentStudent = null;
-            if (student) {
-                currentStudent = student;
-            }
-            this.setState({ loading: false, currentStudent });
-        });
+        // this.inprogressRef = firebase.database().ref(`/tutorq/inprogress/${this.state.uid}`);
+        // this.inprogressRef.on('value', (snap) => {
+        //     const student = snap.val();
+        //     let currentStudent = null;
+        //     if (student) {
+        //         currentStudent = student;
+        //     }
+        //     this.setState({ loading: false, currentStudent });
+        // });
 
-        this.queueRef = firebase.database().ref(`/tutorq/inqueue`);
-        this.queueRef.on('value', (snap) => {
-            const queue = snap.val() || {};
-            let lengthOfQueue = Object.keys(queue).length;
-            this.setState({ lengthOfQueue });
-        });
+        // this.queueRef = firebase.database().ref(`/tutorq/inqueue`);
+        // this.queueRef.on('value', (snap) => {
+        //     const queue = snap.val() || {};
+        //     let lengthOfQueue = Object.keys(queue).length;
+        //     this.setState({ lengthOfQueue });
+        // });
     }
 
     componentWillUnmount() {
-        this.inprogressRef.off();
-        this.queueRef.off();
+        // this.inprogressRef.off();
+        // this.queueRef.off();
     }
 
     toggleFinishModal = () => {
@@ -109,7 +103,6 @@ export default class TutorQAdminAdminQueue extends Component {
                             <Button style={{ backgroundColor: "#005696" }} onClick={() => {
                                 this.toggleFinishModal();
                                 this.setState({ loading: true });
-                                finishTutorStudent();
                             }}>Confirm</Button>{' '}
                             <Button color="secondary" onClick={this.toggleFinishModal}>Cancel</Button>
                         </ModalFooter>
@@ -121,11 +114,7 @@ export default class TutorQAdminAdminQueue extends Component {
                             <Button style={{ backgroundColor: "#005696" }} onClick={() => {
                                 this.toggleFinishAndNewStudentModal();
                                 this.setState({ loading: true });
-                                finishTutorStudent().then(r => {
-                                    if (r.data.success) {
-                                        giveTutorStudent();
-                                    }
-                                });
+
                             }} disabled={lengthOfQueue <= 0}>Confirm</Button>{' '}
                             <Button color="secondary" onClick={this.toggleFinishAndNewStudentModal}>Cancel</Button>
                         </ModalFooter>
@@ -140,7 +129,7 @@ export default class TutorQAdminAdminQueue extends Component {
                             style={{ backgroundColor: '#005696' }}
                             onClick={() => {
                                 this.setState({ loading: true });
-                                giveTutorStudent();
+
                             }}>Get student</Button>
                     </div>
 

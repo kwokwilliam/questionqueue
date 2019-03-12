@@ -1,8 +1,6 @@
 import React from 'react';
-import firebase from 'firebase/app';
 import { Button } from 'reactstrap';
 import { Link } from 'react-router-dom';
-import 'firebase/auth';
 
 export default function TutorQAdminMain({ adminButtons }) {
     return <>
@@ -15,7 +13,7 @@ export default function TutorQAdminMain({ adminButtons }) {
         </div>
         <div>
             <Button onClick={() => {
-                firebase.auth().signOut();
+
             }}>
                 Sign out
             </Button>
