@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/badoux/checkmail"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,6 +24,11 @@ type TeacherUpdate struct {
 	LastName    string `json:"last_name"`
 }
 
+func (tu *TeacherUpdate) ToString() string {
+	b, _ := json.Marshal(tu)
+	return string(b)
+}
+
 type NewTeacher struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
@@ -41,6 +47,10 @@ func (nt *NewTeacher) VerifyNewTeacher() error {
 
 	if nt.Password != nt.PasswordConf {
 		return errors.New("passwords do not match")
+	}
+
+	if len(nt.Password) < 6 {
+		return errors.New("password needs to be more than 6 characters long")
 	}
 
 	if err := checkmail.ValidateFormat(nt.Email); err != nil {
@@ -65,16 +75,8 @@ func (tu *TeacherUpdate) VerifyTeacherUpdate() error {
 		return err // ErrBadFormat
 	}
 
-	if err := checkmail.ValidateHost(tu.Email); err != nil {
-		return err // ErrUnresolvableHost
-	}
-
-	if len(tu.FirstName) == 0 {
-		return errors.New("first name cannot be empty")
-	}
-
-	if len(tu.LastName) == 0 {
-		return errors.New("last name cannot be empty")
+	if len(tu.NewPassword) < 6 {
+		return errors.New("password needs to be more than 6 characters long")
 	}
 
 	return nil

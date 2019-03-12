@@ -256,8 +256,7 @@ func (ms *MongoStore) UpdateTeacher(tu *model.TeacherUpdate) (*mongo.UpdateResul
 	}
 
 	return ms.GetCollection(dbName, collQuestion).
-		// use UpdateMany() instead of UpdateOne() since only one result should be matched
-		UpdateMany(nil,
+		UpdateOne(nil,
 			bson.M{
 				"email":  bson.M{"$eq": tu.Email}},
 			bson.M{

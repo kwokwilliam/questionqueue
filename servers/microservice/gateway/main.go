@@ -68,11 +68,11 @@ func main() {
 	router.HandleFunc("/test", ctx.OkHandler)
 	// Teacher control: POST; PATCH
 	router.HandleFunc("/v1/teacher", ctx.TeacherHandler)
+	// TA/teacher session control: POST, DELETE
+	router.HandleFunc("/v1/teacher/login", ctx.TeacherSessionHandler)
 	// Specific TA/teacher control: GET
 	// only accepts `me`
 	router.HandleFunc("/v1/teacher/{id}", ctx.TeacherProfileHandler)
-	// TA/teacher session control: POST, DELETE
-	router.HandleFunc("/v1/teacher/login", ctx.TeacherSessionHandler)
 	// Student control - POSTing new questions and enqueue: POST
 	router.HandleFunc("/v1/student", ctx.PostQuestionHandler)
 

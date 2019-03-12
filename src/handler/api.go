@@ -89,8 +89,15 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// get current state and session ID
 		currentState := &session.State{}
 		_, err := session.GetState(r, ctx.Key, ctx.SessionStore, currentState)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		sid, err := session.GetSessionID(r, ctx.Key)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -100,12 +107,6 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 		tu, err := decodeTeacherUpdate(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-			return
-		}
-
-		// since `State` can be any interface, force cast into `TeacherUpdate`
-		if tu.Email != currentState.Interface.(model.TeacherUpdate).Email {
-			http.Error(w, "you can only modify your profile", http.StatusForbidden)
 			return
 		}
 
@@ -121,16 +122,35 @@ func (ctx *Context) TeacherHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		res, err := ctx.MongoStore.UpdateTeacher(tu)
-		if err != nil {
+		// TODO: updating doesnt work
+		if res, err := ctx.MongoStore.UpdateTeacher(tu); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			log.Println("upsertedID:",res.UpsertedID)
+		}
+
+		// retrieve updated record
+		// could use id
+		currentTeacher, err := ctx.MongoStore.GetTeacherByEmail(tu.Email)
+		if len(currentTeacher) > 1 {
+			log.Printf("email %v got more than 1 result", tu.Email)
+			http.Error(w, "got more than one profile", http.StatusInternalServerError)
+		}
+
+		newState := session.State{
+			SessionStart: time.Now(),
+			Interface:    currentTeacher[0],
+		}
+
+		if err := ctx.SessionStore.Save(sid, newState); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		js, _ := json.Marshal(tu)
-
 		// `res.UpsertedID` should match whatever the original session ID is, *double check* redis
-		if err := ctx.SessionStore.Save(session.SessionID(res.UpsertedID.(string)), tu); err != nil {
+		js, err := json.Marshal(currentTeacher[0])
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -320,6 +340,9 @@ func (ctx *Context) authenticate(email, password string) (*model.Teacher, error)
 	if err := teachers[0].Authenticate(password); err != nil {
 		return nil, ErrInvalidCredentials
 	}
+
+	// hide password_hash
+	teachers[0].PasswordHash = ""
 
 	return teachers[0], nil
 }
