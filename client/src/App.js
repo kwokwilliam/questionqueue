@@ -24,7 +24,7 @@ class App extends Component {
                     <Router>
                         <Switch>
                             <Route exact path="/" component={() => <TutorQStudent />} />
-                            <Route exact path="/tutorqadmin" component={() => <TutorQAdmin />} />
+                            <Route path="/tutorqadmin" component={() => <TutorQAdmin />} />
                             <Route render={() => <div style={{ margin: 20 }}>Error: Page not found :(</div>} />
                         </Switch>
                     </Router>

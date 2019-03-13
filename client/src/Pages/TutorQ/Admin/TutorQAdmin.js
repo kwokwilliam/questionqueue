@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { Button } from 'reactstrap';
-import { Route } from 'react-router-dom';
+import { Input, Button } from 'reactstrap';
+import { Route, Switch } from 'react-router-dom';
 import Spinner from 'react-loader-spinner';
 import Loadable from 'react-loadable';
 import Endpoints from '../../../Endpoints/Endpoints';
@@ -40,7 +40,14 @@ export default class TutorQAdmin extends Component {
             authToken: localStorage.getItem("Authorization") || null,
             user: null,
             loading: true,
-            admin: false
+            admin: false,
+            loginEmail: "",
+            loginPassword: "",
+            signUpEmail: "",
+            signUpPassword: "",
+            signUpPasswordConf: "",
+            signUpFirstName: "",
+            signUpLastName: ""
         }
 
         this.adminButtons = [
@@ -111,20 +118,110 @@ export default class TutorQAdmin extends Component {
         this.setAuthToken(null);
     }
 
+    signIn = async () => {
+        const { URL, TeacherLogin } = Endpoints;
+        const { loginEmail, loginPassword } = this.state;
+        const sendData = {
+            email: loginEmail,
+            password: loginPassword
+        }
+        const response = await fetch(URL + TeacherLogin, {
+            method: "POST",
+            body: JSON.stringify(sendData),
+            headers: new Headers({
+                "Content-Type": "application/json"
+            })
+        });
+        if (response.status >= 300) {
+            const error = await response.text();
+            this.setError(error);
+            return;
+        }
+        const authToken = response.headers.get("Authorization")
+        localStorage.setItem("Authorization", authToken);
+        this.setError("");
+        this.props.setAuthToken(authToken);
+        const user = await response.json();
+        this.setUser(user);
+        this.setState({
+            loginEmail: "",
+            loginPassword: ""
+        });
+    }
+
+    signUp = async () => {
+
+    }
+
+    change = (e) => {
+        this.setState({
+            [e.target.name]: e.target.value
+        });
+    }
+
     render() {
         const { loading, user, admin } = this.state;
-        console.log(loading);
+        const inputStyles = { maxWidth: 500, margin: 'auto', marginTop: 30 };
         return <div style={{ textAlign: 'center' }}>
             <h1 style={{ marginBottom: '5vh' }}>
-                TutorQ Admin Panel
+                QuestionQueue Admin Panel
             </h1>
 
             {loading && <Loading />}
 
             {!loading && !user && <div>
+                <h2>Sign In</h2>
+                <Input placeholder={"Email"}
+                    name="loginEmail"
+                    onChange={this.change}
+                    value={this.state.loginEmail}
+                    style={inputStyles}
+                />
+                <Input placeholder={"Password"}
+                    name="loginPassword"
+                    onChange={this.change}
+                    value={this.state.loginPassword}
+                    style={inputStyles}
+                />
                 <Button onClick={() => {
-                    // firebase.auth().signInWithRedirect(provider);
-                }} style={{ backgroundColor: "#005696" }}>Sign in</Button>
+                    this.signIn();
+                }} style={{ backgroundColor: "#005696", marginTop: 10 }}>Sign in</Button>
+                <div style={{ marginBottom: 20 }}></div>
+                <h2>Sign Up</h2>
+                <Input placeholder={"Email"}
+                    name="signUpEmail"
+                    onChange={this.change}
+                    value={this.state.signUpEmail}
+                    style={inputStyles}
+                />
+                <Input placeholder={"Password"}
+                    name="signUpPassword"
+                    onChange={this.change}
+                    value={this.state.signUpPassword}
+                    style={inputStyles}
+                />
+                <Input placeholder={"Password confirmation"}
+                    name="signUpPasswordConf"
+                    onChange={this.change}
+                    value={this.state.signUpPasswordConf}
+                    style={inputStyles}
+                />
+                <Input placeholder={"First Name"}
+                    name="signUpFirstName"
+                    onChange={this.change}
+                    value={this.state.signUpFirstName}
+                    style={inputStyles}
+                />
+                <Input placeholder={"Last Name"}
+                    name="signUpLastName"
+                    onChange={this.change}
+                    value={this.state.signUpLastName}
+                    style={inputStyles}
+                />
+                <Button onClick={() => {
+                    this.signUp();
+                }} style={{ backgroundColor: "#005696", marginTop: 10 }}>Sign up</Button>
+
             </div>}
 
             {user && admin && <>

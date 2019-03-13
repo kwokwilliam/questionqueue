@@ -250,7 +250,7 @@ export default class TutorQStudent extends Component {
         let locations = [];
         locations.push(location);
         return <>
-            <h1 style={{ margin: 'auto', textAlign: 'center' }}>TutorQ</h1>
+            <h1 style={{ margin: 'auto', textAlign: 'center' }}>QuestionQueue</h1>
 
 
             {this.state.inQueue && <>
@@ -278,7 +278,7 @@ export default class TutorQStudent extends Component {
                     <div style={{ marginTop: '10vh', textAlign: 'center' }}>
                         {page === 0 && <Fade>
                             <>
-                                <h3>Welcome to TutorQ!</h3>
+                                <h3>Welcome to QuestionQueue!</h3>
                                 <p>This is an application used for the INFO tutor. Please have cookies enabled or the application will not function properly.
                                     Your data will be collected. See how it is being used <Link to="/blog/tutordata">here</Link>.</p>
                                 <h3>Please enter your name</h3>
