@@ -59,15 +59,11 @@ func (n *Notifier) SendMessagesToWebsockets(messages <-chan amqp.Delivery, sessA
 			log.Printf("Error getting the current queue: %v", err)
 		}
 
-		// get studentized queue and marshal both regular queue and student queue
-		studentizedQueue := currQueue.GetStudentizedQueue()
+		// get studentized queue and marshal both regular queue and student queue positions
+		studentPositions := currQueue.GetStudentPositions()
 		queueMarshalled, err := json.Marshal(currQueue)
 		if err != nil {
 			log.Printf("Error marshalling queue: %v", err)
-		}
-		studentizedQueueMarshalled, err := json.Marshal(studentizedQueue)
-		if err != nil {
-			log.Printf("Error marshalling studentized queue: %v", err)
 		}
 
 		// Notify all the users of a new queue state
@@ -78,7 +74,11 @@ func (n *Notifier) SendMessagesToWebsockets(messages <-chan amqp.Delivery, sessA
 					conn.Connection.Close()
 				}
 			} else {
-				if err := conn.Connection.WriteMessage(websocket.TextMessage, studentizedQueueMarshalled); err != nil {
+				studentPositionedMarshalled, err := json.Marshal(studentPositions[id])
+				if err != nil {
+					log.Printf("Error marshalling student position for %v: %v", id, err)
+				}
+				if err := conn.Connection.WriteMessage(websocket.TextMessage, studentPositionedMarshalled); err != nil {
 					n.RemoveConnection(id)
 					conn.Connection.Close()
 				}

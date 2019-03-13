@@ -23,14 +23,17 @@ type QuestionQueue struct {
 	Queue []*Question `json:"queue"`
 }
 
-// GetStudentizedQueue will return a copy of the original question queue with
-// all data stripped except the ID of the individuals within the queue.
-func (q *QuestionQueue) GetStudentizedQueue() *QuestionQueue {
-	studentizedQueue := &QuestionQueue{}
-	for _, question := range q.Queue {
-		studentizedQueue.Queue = append(studentizedQueue.Queue, &Question{
-			ID: question.ID,
-		})
+// PositionInLine is the position in line for the student map
+type PositionInLine struct {
+	Position int `json:"position"`
+}
+
+// GetStudentPositions will convert the entire queue into a map to get
+// student positions faster.
+func (q *QuestionQueue) GetStudentPositions() map[string]*PositionInLine {
+	studentPositions := make(map[string]*PositionInLine)
+	for i, question := range q.Queue {
+		studentPositions[question.ID] = &PositionInLine{i}
 	}
-	return studentizedQueue
+	return studentPositions
 }
