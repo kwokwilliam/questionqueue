@@ -87,9 +87,18 @@ export default class TutorQStudent extends Component {
             const { data } = event;
             const parsedData = JSON.parse(data);
             if (parsedData) {
-                const { position } = parsedData;
+                const { position, queueLength } = parsedData;
                 this.setState({
-                    inQueue: true
+                    inQueue: true,
+                    queueLength,
+                    positionInQueue: position,
+                    sentDataOut: false
+                });
+            } else {
+                this.setState({
+                    inQueue: false,
+                    queueLength: 0,
+                    positionInQueue: -1
                 })
             }
             // let userInQueue = -1;
