@@ -299,11 +299,9 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 // UpdateQueue commits an update to Redis and MessageQueue
 func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
 
-	id := nq.BelongsTo
-
 	// get current queue from redis
-	currentState := &session.State{}
-	err := ctx.SessionStore.Get("queue", currentState)
+	currentQueue := model.QuestionQueue{}
+	err := ctx.SessionStore.GetQueue(&currentQueue)
 	if err != nil {
 		// `redis: nil` == empty redis, ignore
 		if err.Error() != "redis: nil" {
@@ -311,20 +309,10 @@ func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
 		}
 	}
 
-	// update current queue
-	currentID, err := currentQueueMarshaler(currentState.Interface)
-	if err != nil {
-		return err
-	}
-
-	currentID = append(currentID, id)
-	newState := session.State{
-		SessionStart: time.Now(),
-		Interface:    currentID,
-	}
+	currentQueue.Queue = append(currentQueue.Queue, nq)
 
 	// update redis
-	if err := ctx.SessionStore.SetQueue("queue", newState); err != nil {
+	if err := ctx.SessionStore.SetQueue(currentQueue); err != nil {
 		return err
 	}
 
@@ -332,28 +320,43 @@ func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
 	ctx.Notifier.PublishMessage(&notifier.Message{
 		Type:    messageType,
 		Content: nq,
-		UserID:  id,
+		UserID:  nq.ID,
 	})
 
 	return nil
 }
 
-// CurrentQueueMarshaler takes the content of the current queue and marshals into a string slice for manipulation
-// Returns any error found
-func currentQueueMarshaler(i interface{}) ([]string, error) {
-	marshaledCurrentState, err := json.Marshal(i)
-	var currentID []string
-
-	if string(marshaledCurrentState) == "null" || len(marshaledCurrentState) == 0 {
-		return []string{}, nil
-	}
-
-	if err = json.Unmarshal(marshaledCurrentState, &currentID); err != nil {
-		return nil, err
-	} else {
-		return currentID, nil
-	}
-}
+//// CurrentQueueMarshaler takes the content of the current queue and marshals into a string slice for manipulation
+//// Returns any error found
+//func currentQueueMarshaler(i interface{}) ([]string, error) {
+//	marshaledCurrentState, err := json.Marshal(i)
+//	var currentID []string
+//
+//	if string(marshaledCurrentState) == "null" || len(marshaledCurrentState) == 0 {
+//		return []string{}, nil
+//	}
+//
+//	if err = json.Unmarshal(marshaledCurrentState, &currentID); err != nil {
+//		return nil, err
+//	} else {
+//		return currentID, nil
+//	}QueueMarshaler takes the content of the current queue and marshals into a string slice for manipulation
+////// Returns any error found
+////func currentQueueMarshaler(i interface{}) ([]string, error) {
+////	marshaledCurrentState, err := json.Marshal(i)
+////	var currentID []string
+////
+////	if string(marshaledCurrentState) == "null" || len(marshaledCurrentState) == 0 {
+////		return []string{}, nil
+////	}
+////
+////	if err = json.Unmarshal(marshaledCurrentState, &currentID); err != nil {
+////		return nil, err
+////	} else {
+////		return currentID, nil
+////	}
+////}
+//}
 
 // HttpWriter takes necessary arguments to write back to client.
 func httpWriter(statusCode int, body []byte, contentType string, w http.ResponseWriter) {

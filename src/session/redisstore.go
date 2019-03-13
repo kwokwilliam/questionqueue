@@ -3,7 +3,6 @@ package session
 import (
 	"encoding/json"
 	"github.com/go-redis/redis"
-	"log"
 	"time"
 )
 
@@ -51,23 +50,40 @@ func (rs *RedisStore) Save(sid SessionID, sessionState interface{}) error {
 	return nil
 }
 
-func (rs *RedisStore) SetQueue(sid SessionID, sessionState interface{}) error {
+func (rs *RedisStore) SetQueue(sessionState interface{}) error {
+
+	j, err := json.Marshal(sessionState)
+	if err != nil {
+		return err
+	}
+
+	// do not expire question queue
+	rs.Client.Set("queue", j, 0)
+	return nil
+}
+
+func (rs *RedisStore) GetQueue(sessionState interface{}) error {
+	// get the previously-saved session state data from redis,
+	// unmarshal it back into the `sessionState` parameter
+	// and reset the expiry time, so that it doesn't get deleted until
+	// the SessionDuration has elapsed.
+
+	// for extra-credit using the Pipeline feature of the redis
+	// package to do both the get and the reset of the expiry time
+	// in just one network round trip!
 
 	pipeline := rs.Client.Pipeline()
-	// do not expire queue
-	pipe := pipeline.Set(string(sid), sessionState, 0)
+	pipe := pipeline.Get("queue")
+	// do not expire question queue
+	pipeline.Expire("queue", 0)
 
 	if _, err := pipeline.Exec(); err != nil {
-		// TODO: redis: can't marshal []string
-		log.Println("redis cannot exec command")
 		return err
 	}
 
 	if s, err := pipe.Result(); err != nil {
 		return err
 	} else {
-		// TODO: remove me
-		log.Println("pipeline.Result:",s)
 		if err = json.Unmarshal([]byte(s), sessionState); err != nil {
 			// cannot unmarshal
 			return err

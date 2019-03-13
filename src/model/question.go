@@ -6,7 +6,7 @@ import (
 )
 
 type Question struct {
-	BelongsTo   string    `json:"id"`
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Class       string    `json:"class"`
 	Topic       string    `json:"topic"`
@@ -58,7 +58,7 @@ func CreateNewQuestion(id, name, class, topic, description string, x, y float64)
 	}
 
 	return &Question{
-		BelongsTo:   id,
+		ID:          id,
 		Name:        name,
 		Class:       class,
 		Topic:       topic,
