@@ -140,7 +140,7 @@ export default class TutorQAdmin extends Component {
         const authToken = response.headers.get("Authorization")
         localStorage.setItem("Authorization", authToken);
         this.setError("");
-        this.props.setAuthToken(authToken);
+        this.setAuthToken(authToken);
         const user = await response.json();
         this.setUser(user);
         this.setState({
@@ -150,7 +150,40 @@ export default class TutorQAdmin extends Component {
     }
 
     signUp = async () => {
-
+        const { URL, Teacher } = Endpoints;
+        const { signUpEmail, signUpPassword, signUpPasswordConf, signUpFirstName, signUpLastName } = this.state;
+        const sendData = {
+            email: signUpEmail,
+            password: signUpPassword,
+            password_conf: signUpPasswordConf,
+            firstname: signUpFirstName,
+            lastname: signUpLastName
+        }
+        const response = await fetch(URL + Teacher, {
+            method: "POST",
+            body: JSON.stringify(sendData),
+            headers: new Headers({
+                "Content-Type": "application/json"
+            })
+        });
+        if (response.status >= 300) {
+            const error = await response.text();
+            this.setError(error);
+            return;
+        }
+        const authToken = response.headers.get("Authorization");
+        localStorage.setItem("Authorization", authToken);
+        this.setError("");
+        this.setAuthToken(authToken);
+        const user = await response.json();
+        this.setUser(user);
+        this.setState({
+            signUpEmail: "",
+            signUpPassword: "",
+            signUpPasswordConf: "",
+            signUpFirstName: "",
+            signUpLastName: ""
+        })
     }
 
     change = (e) => {
