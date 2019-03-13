@@ -73,8 +73,10 @@ func main() {
 	// Specific TA/teacher control: GET
 	// only accepts `me` or `all`
 	router.HandleFunc("/v1/teacher/{id}", ctx.TeacherProfileHandler)
-	// Student control - POSTing new questions and enqueue: POST
+	// Question control - POSTing new questions and enqueue: POST
 	router.HandleFunc("/v1/student", ctx.PostQuestionHandler)
+	// Question control - DELETE dequeues an existing question: DELETE
+	router.HandleFunc("/v1/student/{id}", ctx.PostQuestionHandler)
 
 	log.Println("mongo:", mongoAddr)
 	log.Println("redis:",redisAddr)
