@@ -180,6 +180,7 @@ export default class TutorQAdmin extends Component {
                 <Input placeholder={"Password"}
                     name="loginPassword"
                     onChange={this.change}
+                    type="password"
                     value={this.state.loginPassword}
                     style={inputStyles}
                 />
@@ -196,12 +197,14 @@ export default class TutorQAdmin extends Component {
                 />
                 <Input placeholder={"Password"}
                     name="signUpPassword"
+                    type="password"
                     onChange={this.change}
                     value={this.state.signUpPassword}
                     style={inputStyles}
                 />
                 <Input placeholder={"Password confirmation"}
                     name="signUpPasswordConf"
+                    type="password"
                     onChange={this.change}
                     value={this.state.signUpPasswordConf}
                     style={inputStyles}
