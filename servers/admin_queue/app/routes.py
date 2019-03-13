@@ -159,13 +159,17 @@ def queue_delete_handler(student_id):
         if req_q == None:
             return err
 
-        time_update = {
-            "$set": {"resolvedAt": datetime.datetime.now().isoformat()}}
+        # taken out by Rico at 3:10pm 03/13/19
+        # since we're handling question queue only through redis,
+        # `resolvedAt` field is removed from the question struct
 
-        try:
-            db[queue].update_one(q_query, time_update)
-        except pymongo.errors.PyMongoError:
-            return handle_db_error()
+        # time_update = {
+        #     "$set": {"resolvedAt": datetime.datetime.now().isoformat()}}
+        #
+        # try:
+        #     db[queue].update_one(q_query, time_update)
+        # except pymongo.errors.PyMongoError:
+        #     return handle_db_error()
 
         # Remove from redis
         try:
