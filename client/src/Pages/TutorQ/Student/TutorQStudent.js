@@ -41,8 +41,16 @@ export default class TutorQStudent extends Component {
         this.setState({ removeButtonLoading: true });
 
         // Call remove user from queue endpoint
-
-        // TODO
+        const { URL, Queue } = Endpoints;
+        const response = await fetch(URL + Queue + "/" + this.id, {
+            method: "DELETE"
+        });
+        if (response.status >= 300) {
+            const error = await response.text();
+            this.setError(error);
+            return;
+        }
+        // websocket should handle rest of the state changes
     }
 
     componentDidMount = async () => {
@@ -101,26 +109,6 @@ export default class TutorQStudent extends Component {
                     positionInQueue: -1
                 })
             }
-            // let userInQueue = -1;
-            // queue.forEach((student, i) => {
-            //     if (student.id === this.id) {
-            //         userInQueue = i;
-            //     }
-            // });
-            // if (userInQueue > -1) {
-            //     this.setState({
-            //         inQueue: true,
-            //         queueLength: queue.length,
-            //         positionInQueue: userInQueue + 1,
-            //         sentDataOut: false,
-            //     });
-            // } else {
-            //     this.setState({
-            //         inQueue: false,
-            //         queueLength: queue.length,
-            //         positionInQueue: -1
-            //     })
-            // }
         }
     }
 
