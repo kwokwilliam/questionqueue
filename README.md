@@ -34,14 +34,6 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 #### Endpoints
 
 `/v1/student`: student control - GETting current queue position; POSTing new questions and enqueue. Student provides student id as query parameter `studentid`.
-
-~~* `GET`: Get number of people in the queue and current position of active user~~
-
-  ~~`200`; `application/json`: Successfully retrieves queue information and encodes queuing status in the body.~~
-  
-  ~~`401`: Cannot verify _student_ session ID or no _student_ session ID is provided.~~
-  
-  ~~`500`: Internal server error.~~ // Took this out because this is covered by the websocket - wk
   
 * `POST`; `application/json`: Post new question and enqueue the user.
   * `201`; `application/json`: Successfully adds the question and enqueues the user; returns encoded question in the body.
@@ -105,7 +97,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 
 #### Models
 
-We will be utilizing MongoDB as our persistent data store. 
+We will be utilizing MongoDB as our persistent data store. Redis will serve as our storage for sessions, as well as track who is currently in the queue waiting to be helped.
 
 **Users**
  
@@ -151,8 +143,7 @@ The client will send this to the server to create a new account:
   "problem": "question",
   "loc.x": "x-coord_of_location_in_lab",
   "loc.y": "y-coord_of_location_in_lab",
-  "createdAt": "time_created",
-  "resolvedAt": "time_resolved"
+  "createdAt": "time_created"
 }
 ```
 
@@ -195,8 +186,7 @@ The main design decision here is that we would like to obfuscate the contents of
         "problem": "question",
         "loc.x": "x-coord_of_location_in_lab",
         "loc.y": "y-coord_of_location_in_lab",
-        "createdAt": "time_created",
-        "resolvedAt": "time_resolved"
+        "createdAt": "time_created"
       }
   ]
 }
