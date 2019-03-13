@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from 'reactstrap';
 import { Link } from 'react-router-dom';
 
-export default function TutorQAdminMain({ adminButtons }) {
+export default function TutorQAdminMain({ adminButtons, signOut }) {
     return <>
         <div style={{ fontSize: '150%' }}>
             {adminButtons.map(d => {
@@ -13,7 +13,7 @@ export default function TutorQAdminMain({ adminButtons }) {
         </div>
         <div>
             <Button onClick={() => {
-
+                signOut();
             }}>
                 Sign out
             </Button>
