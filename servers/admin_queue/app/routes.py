@@ -147,31 +147,12 @@ def specific_class_handler(class_number):
 # DELETE a student and question from the queue
 @app.route('/v1/queue/<student_id>', methods=['DELETE'])
 def queue_delete_handler(student_id):
-    # taken out by Rico at 3:16pm 03/13/19
-
-    # Check for authentication
-    # auth = check_auth(request)
-    # if auth != None:
-    #     return auth
-
     if request.method == 'DELETE':
         # Update resolution in mongo
         q_query = {"id": student_id}
         req_q, err = check_for_object(q_query, 'question')
         if req_q == None:
             return err
-
-        # taken out by Rico at 3:10pm 03/13/19
-        # since we're handling question queue only through redis,
-        # `resolvedAt` field is removed from the question struct
-
-        # time_update = {
-        #     "$set": {"resolvedAt": datetime.datetime.now().isoformat()}}
-        #
-        # try:
-        #     db[queue].update_one(q_query, time_update)
-        # except pymongo.errors.PyMongoError:
-        #     return handle_db_error()
 
         # Remove from redis
         try:
