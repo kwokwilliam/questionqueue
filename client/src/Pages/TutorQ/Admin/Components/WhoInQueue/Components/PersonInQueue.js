@@ -3,13 +3,25 @@ import {
     Card, CardText, CardBody,
     CardTitle, CardSubtitle, Button
 } from 'reactstrap';
+import Endpoints from '../../../../../../Endpoints/Endpoints';
+import StudentLocation from '../../../../Components/StudentLocation/StudentLocation';
 
 
 // TODO: Use an effect to stop setLoading from happening when component unmounts
 export default function PersonInQueue({ person }) {
     const [loading, setLoading] = useState(false);
 
-    const { timestamp, name, classNumber, problemCategory, problemDescription, id } = person;
+    const id = person.id;
+    const name = person.name;
+    const classNumber = person['class'];
+    const problemCategory = person.topic;
+    const problemDescription = person.problem;
+    const location = {
+        xPercentage: person["loc.x"],
+        yPercentage: person["loc.y"]
+    }
+    const timestamp = person.createdAt;
+
     if (!timestamp) { return null; }
     let dateTimestamp = new Date(timestamp);
     return <Card>
@@ -18,14 +30,20 @@ export default function PersonInQueue({ person }) {
             <CardSubtitle>Course: {classNumber} - {problemCategory}</CardSubtitle>
             <CardText>Submitted: {dateTimestamp.toLocaleDateString()} {dateTimestamp.toLocaleTimeString()}</CardText>
             <CardText>Description: {problemDescription}</CardText>
-            <Button disabled={loading} style={{ backgroundColor: "#005696" }} onClick={() => {
+            <StudentLocation locations={[location]} student={false} />
+            <Button disabled={loading} style={{ backgroundColor: "#005696" }} onClick={async () => {
                 setLoading(true);
-                // removeUserFromQueue({ id, removedFromQueue: true }).then(r => {
-                //     setLoading(false);
-                //     if (!r.data.success) {
-                //         console.log(r.data);
-                //     }
-                // });
+                const { URL, Queue } = Endpoints;
+                const response = await fetch(URL + Queue + "/" + id, {
+                    method: "DELETE"
+                });
+                if (response.status >= 300) {
+                    const error = await response.text();
+                    console.log(error);
+                    return;
+                }
+                setLoading(false);
+                console.log("queue removal successful");
             }}>Remove</Button>
         </CardBody>
     </Card>

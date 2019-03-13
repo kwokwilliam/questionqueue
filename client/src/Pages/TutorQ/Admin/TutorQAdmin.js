@@ -22,15 +22,15 @@ const TutorQAdminWhoIsInQueue = Loadable({
     loading: Loading,
 });
 
-const TutorQAdminAdminQueue = Loadable({
-    loader: () => import('./Components/AdminQueue/TutorQAdminAdminQueue'),
-    loading: Loading,
-});
+// const TutorQAdminAdminQueue = Loadable({
+//     loader: () => import('./Components/AdminQueue/TutorQAdminAdminQueue'),
+//     loading: Loading,
+// });
 
-const TutorQAdminSeatingDistribution = Loadable({
-    loader: () => import('./Components/SeatingDistribution/TutorQAdminSeatingDistribution'),
-    loading: Loading,
-});
+// const TutorQAdminSeatingDistribution = Loadable({
+//     loader: () => import('./Components/SeatingDistribution/TutorQAdminSeatingDistribution'),
+//     loading: Loading,
+// });
 
 
 export default class TutorQAdmin extends Component {
@@ -51,18 +51,18 @@ export default class TutorQAdmin extends Component {
         }
 
         this.adminButtons = [
-            {
-                linkTo: "/tutorqadmin/adminqueue",
-                linkText: "Main Admin Tool"
-            },
+            // {
+            //     linkTo: "/tutorqadmin/adminqueue",
+            //     linkText: "Main Admin Tool"
+            // },
             {
                 linkTo: "/tutorqadmin/whosinqueue",
                 linkText: "See Queue List"
             },
-            {
-                linkTo: "/tutorqadmin/seatingdistribution",
-                linkText: "Seating Distribution"
-            },
+            // {
+            //     linkTo: "/tutorqadmin/seatingdistribution",
+            //     linkText: "Seating Distribution"
+            // },
             // {
             //     linkTo: "/tutorqadmin/statistics",
             //     linkText: "Tutor Statistics"
@@ -262,9 +262,9 @@ export default class TutorQAdmin extends Component {
 
             {user && admin && <>
                 <Route exact path={"/tutorqadmin"} render={() => <TutorQAdminMain adminButtons={this.adminButtons} signOut={this.signOut} />} />
-                <Route path={"/tutorqadmin/adminqueue"} render={() => <TutorQAdminAdminQueue uid={user.id} />} />
-                <Route path={"/tutorqadmin/whosinqueue"} render={() => <TutorQAdminWhoIsInQueue />} />
-                <Route path={"/tutorqadmin/seatingdistribution"} render={() => <TutorQAdminSeatingDistribution />} />
+                {/* <Route path={"/tutorqadmin/adminqueue"} render={() => <TutorQAdminAdminQueue uid={user.id} identification={}/>} /> */}
+                <Route path={"/tutorqadmin/whosinqueue"} render={() => <TutorQAdminWhoIsInQueue uid={user.id} />} />
+                {/* <Route path={"/tutorqadmin/seatingdistribution"} render={() => <TutorQAdminSeatingDistribution />} /> */}
             </>}
 
             {user && !admin && <>

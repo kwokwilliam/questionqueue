@@ -6,6 +6,8 @@ import {
 import Spinner from 'react-loader-spinner';
 import BackToHubButton from '../BackToHubButton';
 import StudentLocation from '../../../Components/StudentLocation/StudentLocation';
+import Endpoints from '../../../../../Endpoints/Endpoints';
+import cookies from 'browser-cookies';
 
 const Loading = () => <div><Spinner
     type="Oval"
@@ -25,9 +27,28 @@ export default class TutorQAdminAdminQueue extends Component {
             confirmFinishAndGetNewStudentModalOpen: false,
             uid: props.uid
         }
+
+        this.id = cookies.get('id');
     }
 
     componentDidMount() {
+        const { QueueWebSocket } = Endpoints;
+        // Connect to websocket here with auth token
+        this.queueSocket = new WebSocket(`${QueueWebSocket}?identification=${this.id}&auth=${this.state.uid}`)
+
+        this.queueSocket.onopen = () => {
+            console.log("Connected");
+        }
+
+        this.queueSocket.onmessage = (event) => {
+            const { data } = event;
+            const parsedData = JSON.parse(data);
+            if (parsedData) {
+                const { queue } = parsedData;
+
+            }
+        }
+
         // this.inprogressRef = firebase.database().ref(`/tutorq/inprogress/${this.state.uid}`);
         // this.inprogressRef.on('value', (snap) => {
         //     const student = snap.val();

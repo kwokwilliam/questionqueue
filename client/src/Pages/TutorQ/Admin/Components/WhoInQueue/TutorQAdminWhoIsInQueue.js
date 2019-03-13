@@ -2,49 +2,40 @@ import React, { useState, useEffect } from 'react';
 import BackToHubButton from '../BackToHubButton';
 import { CardDeck } from 'reactstrap';
 import PersonInQueue from './Components/PersonInQueue';
+import Endpoints from '../../../../../Endpoints/Endpoints';
+
 
 export default function TutorQAdminWhoIsInQueue() {
-    const [queue, setQueue] = useState({});
-    const [mapping, setMapping] = useState({});
+    const [queue, setQueue] = useState([]);
 
     useEffect(() => {
-        // const queueRef = firebase.database().ref('/tutorq/inqueue');
-        // queueRef.on('value', (snap) => {
-        //     let queue = snap.val() || {};
-        //     setQueue(queue);
-        // });
+        const { QueueWebSocket } = Endpoints;
+        // Connect to websocket here with auth token
+        const queueSocket = new WebSocket(`${QueueWebSocket}?identification=${this.id}&auth=${this.state.uid}`)
 
-        // const mappingRef = firebase.database().ref('/tutorq/idToQueueInfo');
-        // mappingRef.on('value', (snap) => {
-        //     let mapping = snap.val() || {};
-        //     setMapping(mapping);
-        // })
-        // return () => {
-        //     queueRef.off();
-        //     mappingRef.off();
-        // }
-    }, []);
+        queueSocket.onopen = () => {
+            console.log("Connected");
+        }
 
-    // creates a clone of the current queue
-    let modifiedQueue = { ...queue };
-
-    Object.keys(mapping).forEach(d => {
-        if (mapping[d]) {
-            let { queueKey, name } = mapping[d];
-            let modQueuePointer = modifiedQueue[queueKey];
-            if (modQueuePointer) {
-                modQueuePointer.name = name;
-                modQueuePointer.id = d;
+        queueSocket.onmessage = (event) => {
+            const { data } = event;
+            const parsedData = JSON.parse(data);
+            if (parsedData) {
+                setQueue(parsedData.queue);
+            } else {
+                setQueue([])
             }
         }
-    });
 
-    let queueAsArr = Object.keys(modifiedQueue).sort((a, b) => {
-        return modifiedQueue[a].timestamp - modifiedQueue[b].timestamp;
-    }).map(d => {
-        let person = modifiedQueue[d];
-        return <PersonInQueue key={d} person={person} />
-    });
+        return () => {
+            queueSocket.close();
+        }
+    }, []);
+
+    let queueAsArr = queue.map((d, i) => {
+        return <PersonInQueue key={"person" + i} person={d} />
+    })
+
     return <>
         <BackToHubButton />
         {queueAsArr.length === 0 && <div>There is nobody in the queue right now.</div>}
