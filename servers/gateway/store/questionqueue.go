@@ -33,7 +33,7 @@ type PositionInLine struct {
 func (q *QuestionQueue) GetStudentPositions() map[string]*PositionInLine {
 	studentPositions := make(map[string]*PositionInLine)
 	for i, question := range q.Queue {
-		studentPositions[question.ID] = &PositionInLine{i}
+		studentPositions[question.ID] = &PositionInLine{i + 1}
 	}
 	return studentPositions
 }
