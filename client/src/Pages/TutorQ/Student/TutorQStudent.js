@@ -37,7 +37,7 @@ export default class TutorQStudent extends Component {
 
     }
 
-    removeMeFromQueue = () => {
+    removeMeFromQueue = async () => {
         this.setState({ removeButtonLoading: true });
 
         // Call remove user from queue endpoint

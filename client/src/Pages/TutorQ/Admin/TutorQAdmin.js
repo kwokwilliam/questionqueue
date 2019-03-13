@@ -3,6 +3,7 @@ import { Button } from 'reactstrap';
 import { Route } from 'react-router-dom';
 import Spinner from 'react-loader-spinner';
 import Loadable from 'react-loadable';
+import Endpoints from '../../../Endpoints/Endpoints';
 
 const Loading = () => <div><Spinner
     type="Oval"
@@ -36,6 +37,7 @@ export default class TutorQAdmin extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            authToken: localStorage.getItem("Authorization") || null,
             user: null,
             loading: true,
             admin: false
@@ -58,27 +60,60 @@ export default class TutorQAdmin extends Component {
             //     linkTo: "/tutorqadmin/statistics",
             //     linkText: "Tutor Statistics"
             // }
-        ]
+        ];
+
     }
 
-    componentWillMount() {
-        // firebase.auth().onAuthStateChanged(user => {
-        //     if (user) {
-        //         isUserAdmin().then(r => {
-        //             if (r.data) {
-        //                 this.setState({ admin: true, user, loading: false });
-        //             } else {
-        //                 this.setState({ admin: false, user, loading: false });
-        //             }
-        //         })
-        //     } else {
-        //         this.setState({ user: null, loading: false });
-        //     }
-        // });
+    componentDidMount = async () => {
+        if (!this.state.authToken) {
+            this.setState({ loading: false });
+            return;
+        }
+
+        const { URL, Teacher } = Endpoints;
+        const response = await fetch(URL + Teacher + "/me", {
+            headers: new Headers({
+                "Authorization": this.state.authToken
+            })
+        });
+        if (response.status >= 300) {
+            alert("Unable to verify login. Logging out...");
+            localStorage.setItem("Authorization", "");
+            this.setAuthToken("");
+            this.setUser(null);
+            return;
+        }
+        const user = await response.json()
+        this.setUser(user);
+    }
+
+    setAuthToken = (authToken) => {
+        this.setState({ authToken });
+    }
+
+    setUser = (user) => {
+        this.setState({ user, admin: user ? user.admin : false, loading: false })
+    }
+
+    signOut = async () => {
+        const { URL, TeacherLogin } = Endpoints;
+        const response = await fetch(URL + TeacherLogin, {
+            method: "DELETE",
+            headers: new Headers({
+                "Authorization": this.state.authToken
+            })
+        });
+        if (response.status >= 300) {
+            alert("Unable to sign out");
+            return;
+        }
+        this.setUser(null);
+        this.setAuthToken(null);
     }
 
     render() {
         const { loading, user, admin } = this.state;
+        console.log(loading);
         return <div style={{ textAlign: 'center' }}>
             <h1 style={{ marginBottom: '5vh' }}>
                 TutorQ Admin Panel
@@ -89,12 +124,12 @@ export default class TutorQAdmin extends Component {
             {!loading && !user && <div>
                 <Button onClick={() => {
                     // firebase.auth().signInWithRedirect(provider);
-                }} style={{ backgroundColor: "#005696" }}>Sign in with Google</Button>
+                }} style={{ backgroundColor: "#005696" }}>Sign in</Button>
             </div>}
 
             {user && admin && <>
                 <Route exact path={"/tutorqadmin"} render={() => <TutorQAdminMain adminButtons={this.adminButtons} />} />
-                <Route path={"/tutorqadmin/adminqueue"} render={() => <TutorQAdminAdminQueue uid={user.uid} />} />
+                <Route path={"/tutorqadmin/adminqueue"} render={() => <TutorQAdminAdminQueue uid={user.id} />} />
                 <Route path={"/tutorqadmin/whosinqueue"} render={() => <TutorQAdminWhoIsInQueue />} />
                 <Route path={"/tutorqadmin/seatingdistribution"} render={() => <TutorQAdminSeatingDistribution />} />
             </>}
@@ -102,7 +137,7 @@ export default class TutorQAdmin extends Component {
             {user && !admin && <>
                 <h1>You are not permitted to view this page.</h1>
                 <Button onClick={() => {
-                    // firebase.auth().signOut();
+                    this.signOut();
                 }}>
                     Sign out
                 </Button>
