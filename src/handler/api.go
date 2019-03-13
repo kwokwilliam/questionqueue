@@ -263,18 +263,16 @@ func (ctx *Context) TeacherSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 // PostQuestionHandler posts new question to mongo and enqueues the question to redis in the format of
-// {queue : [question1, question2, ..., questionN] }
-// TODO: queue is stored under literal `sid:queue` in redis (spec WIP)
-// TODO: redis operations
+// {queue : [id1, id2, ..., idN] }
 func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) {
-
-	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
 
 	if r.Method != http.MethodPost {
 		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, ErrUnsupportedMediaType.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -284,18 +282,77 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if _, err := ctx.MongoStore.InsertQuestion(nq); err != nil {
+	if err := updateQueue(ctx, nq, notifier.QuestionNew); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := updateQueue(ctx, nq, notifier.QuestionNew); err != nil {
+	if _, err := ctx.MongoStore.InsertQuestion(nq); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	httpWriter(http.StatusCreated, nil, "", w)
 	return
+}
+
+// UpdateQueue commits an update to Redis and MessageQueue
+func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
+
+	id := nq.BelongsTo
+
+	// get current queue from redis
+	currentState := &session.State{}
+	err := ctx.SessionStore.Get("queue", currentState)
+	if err != nil {
+		// `redis: nil` == empty redis, ignore
+		if err.Error() != "redis: nil" {
+			return err
+		}
+	}
+
+	// update current queue
+	currentID, err := currentQueueMarshaler(currentState.Interface)
+	if err != nil {
+		return err
+	}
+
+	currentID = append(currentID, id)
+	newState := session.State{
+		SessionStart: time.Now(),
+		Interface:    currentID,
+	}
+
+	// update redis
+	if err := ctx.SessionStore.SetQueue("queue", newState); err != nil {
+		return err
+	}
+
+	// create message and push to mq
+	ctx.Notifier.PublishMessage(&notifier.Message{
+		Type:    messageType,
+		Content: nq,
+		UserID:  id,
+	})
+
+	return nil
+}
+
+// CurrentQueueMarshaler takes the content of the current queue and marshals into a string slice for manipulation
+// Returns any error found
+func currentQueueMarshaler(i interface{}) ([]string, error) {
+	marshaledCurrentState, err := json.Marshal(i)
+	var currentID []string
+
+	if string(marshaledCurrentState) == "null" || len(marshaledCurrentState) == 0 {
+		return []string{}, nil
+	}
+
+	if err = json.Unmarshal(marshaledCurrentState, &currentID); err != nil {
+		return nil, err
+	} else {
+		return currentID, nil
+	}
 }
 
 // HttpWriter takes necessary arguments to write back to client.
@@ -311,36 +368,6 @@ func httpWriter(statusCode int, body []byte, contentType string, w http.Response
 	if len(body) > 0 {
 		_, _ = w.Write(body)
 	}
-}
-
-// UpdateQueue commits an update to Redis and MessageQueue
-func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
-
-	// get from, update and save to redis
-	currentState := &session.State{}
-	currentQueue := ctx.SessionStore.Get("queue", currentState)
-	id := nq.BelongsTo
-
-	// json array of questions
-	// TODO: marshal json array into struct slice
-	currentQuestion, err := json.Marshal(currentState.Interface)
-	if err != nil {
-		return err
-	}
-
-
-	if err := ctx.SessionStore.SetQueue("queue", nq); err != nil {
-		return err
-	}
-
-	// create message and push to mq
-	ctx.Notifier.PublishMessage(&notifier.Message{
-		Type:    messageType,
-		Content: nq,
-		UserID:  "queue",
-	})
-
-	return nil
 }
 
 // Authenticate searches existing teachers in the mongo,

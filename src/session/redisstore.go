@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"github.com/go-redis/redis"
+	"log"
 	"time"
 )
 
@@ -54,15 +55,19 @@ func (rs *RedisStore) SetQueue(sid SessionID, sessionState interface{}) error {
 
 	pipeline := rs.Client.Pipeline()
 	// do not expire queue
-	pipe := pipeline.Set(sid.getRedisKey(), sessionState, 0)
+	pipe := pipeline.Set(string(sid), sessionState, 0)
 
 	if _, err := pipeline.Exec(); err != nil {
+		// TODO: redis: can't marshal []string
+		log.Println("redis cannot exec command")
 		return err
 	}
 
 	if s, err := pipe.Result(); err != nil {
 		return err
 	} else {
+		// TODO: remove me
+		log.Println("pipeline.Result:",s)
 		if err = json.Unmarshal([]byte(s), sessionState); err != nil {
 			// cannot unmarshal
 			return err
