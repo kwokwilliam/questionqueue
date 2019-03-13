@@ -25,7 +25,8 @@ type QuestionQueue struct {
 
 // PositionInLine is the position in line for the student map
 type PositionInLine struct {
-	Position int `json:"position"`
+	Position    int `json:"position"`
+	QueueLength int `json:"queueLength"`
 }
 
 // GetStudentPositions will convert the entire queue into a map to get
@@ -33,7 +34,7 @@ type PositionInLine struct {
 func (q *QuestionQueue) GetStudentPositions() map[string]*PositionInLine {
 	studentPositions := make(map[string]*PositionInLine)
 	for i, question := range q.Queue {
-		studentPositions[question.ID] = &PositionInLine{i + 1}
+		studentPositions[question.ID] = &PositionInLine{i + 1, len(q.Queue)}
 	}
 	return studentPositions
 }
