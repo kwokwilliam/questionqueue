@@ -51,7 +51,6 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 `/v1/class`: class control
 * `GET`: Get all classes.
   * `200`; `application/json`: Successfully retrieves all classes; returns the encoded list in the body.
-  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 * `POST`; `application/json`: Create new class.
   * `201`; `application/json`: Successfully creates a new class; returns encoded class in the body.
@@ -96,13 +95,12 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 
 `/v1/queue`: websocket connection to notify users and teachers of the current queue. Student provides student id as query parameter `studentid`.
 * If the user connected with an auth token, we can assume the user is a teacher of a class, so when we emit the entire queue list to it and do so for subsequent users entering or leaving.
-* If no auth token is provided, we only give them the user hashes of people in line.
+* If no auth token is provided, we only give them a position object in this format `{ "position": number }` where the `number` is their position in line.
 
-`/v1/queue/{student_id}`: queue control for TA/teachers
+`/v1/queue/{student_id}`: queue control for TA/teachers/current student
 * `DELETE`: Delete the student from the queue based on the provided `student_id`.
   * `200`: Successfully resolved the student's question and removed from queue.
   * `400`: `student_id` does not exist in the queue or has already been resolved.
-  * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
   * `500`: Internal server error.
 
 #### Models
