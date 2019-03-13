@@ -86,27 +86,32 @@ export default class TutorQStudent extends Component {
         this.queueSocket.onmessage = (event) => {
             const { data } = event;
             const parsedData = JSON.parse(data);
-            const { queue } = parsedData;
-            let userInQueue = -1;
-            queue.forEach((student, i) => {
-                if (student.id === this.id) {
-                    userInQueue = i;
-                }
-            });
-            if (userInQueue > -1) {
+            if (parsedData) {
+                const { position } = parsedData;
                 this.setState({
-                    inQueue: true,
-                    queueLength: queue.length,
-                    positionInQueue: userInQueue + 1,
-                    sentDataOut: false,
-                });
-            } else {
-                this.setState({
-                    inQueue: false,
-                    queueLength: queue.length,
-                    positionInQueue: -1
+                    inQueue: true
                 })
             }
+            // let userInQueue = -1;
+            // queue.forEach((student, i) => {
+            //     if (student.id === this.id) {
+            //         userInQueue = i;
+            //     }
+            // });
+            // if (userInQueue > -1) {
+            //     this.setState({
+            //         inQueue: true,
+            //         queueLength: queue.length,
+            //         positionInQueue: userInQueue + 1,
+            //         sentDataOut: false,
+            //     });
+            // } else {
+            //     this.setState({
+            //         inQueue: false,
+            //         queueLength: queue.length,
+            //         positionInQueue: -1
+            //     })
+            // }
         }
     }
 
