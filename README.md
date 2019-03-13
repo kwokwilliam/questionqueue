@@ -76,7 +76,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
 
-`/v1/teacher/{teacher_id}`: specific TA/teacher control
+`/v1/teacher/{teacher_id: me | all}`: specific TA/teacher control
 * `GET`: Get TA/teacher information.
   * `200`; `application/json`: Successfully retrieves TA/teacher information; returns encoded user model in the body.
   * `401`: Cannot verify _teacher_ session ID or no _teacher_ session ID is provided.
@@ -84,7 +84,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 
 `/v1/teacher/login`: TA/teacher session control
 * `POST`: Log in TA/teacher and returns session cookie.
-  * `200`; `application/json`: Successfully logs in a TA/teacher; returns session ID in `Set-Cookie` header (?).
+  * `200`; `application/json`: Successfully logs in a TA/teacher; returns session ID in `Authorization` header as `Bearer: ________`.
   * `401`: Cannot authenticate the provided credentials.
   * `415`: Cannot decode body or receives unsupported body.
   * `500`: Internal server error.
