@@ -314,11 +314,12 @@ func httpWriter(statusCode int, body []byte, contentType string, w http.Response
 }
 
 // UpdateQueue commits an update to Redis and MessageQueue
-func updateQueue(ctx *Context, nq interface{}, messageType string) error {
+func updateQueue(ctx *Context, nq *model.Question, messageType string) error {
 
 	// get from, update and save to redis
 	currentState := &session.State{}
 	currentQueue := ctx.SessionStore.Get("queue", currentState)
+	id := nq.BelongsTo
 
 	// json array of questions
 	// TODO: marshal json array into struct slice
@@ -326,9 +327,6 @@ func updateQueue(ctx *Context, nq interface{}, messageType string) error {
 	if err != nil {
 		return err
 	}
-
-	marshaledNQ, _ := json.Marshal(nq)
-
 
 
 	if err := ctx.SessionStore.SetQueue("queue", nq); err != nil {
