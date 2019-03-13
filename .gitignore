@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+.DS_Store
 venv/
 
 # Test binary, build with `go test -c`
