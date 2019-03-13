@@ -19,6 +19,7 @@ var (
 	ErrUnsupportedMediaType = errors.New("unsupported media type")
 	ErrInvalidCredentials   = errors.New("invalid credentials")
 	ErrMethodNotAllowed     = errors.New("method not allowed")
+	ErrQuestionNotFound		= errors.New("question not found")
 )
 
 const (
@@ -321,13 +322,20 @@ func (ctx *Context) DeleteQuestionHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		err := dequeueQuestion(ctx, id)
+		q, err := dequeueQuestion(ctx, id)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+			if err == ErrQuestionNotFound {
+				http.Error(w, ErrQuestionNotFound.Error(), http.StatusNotFound)
+				return
+			} else {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 
-		httpWriter(http.StatusOK, []byte(id), MimePlain, w)
+		b, _ := json.Marshal(q)
+
+		httpWriter(http.StatusOK, b, MimeJson, w)
 
 	default:
 		http.Error(w, ErrMethodNotAllowed.Error(), http.StatusMethodNotAllowed)
@@ -365,32 +373,45 @@ func enqueueQuestion(ctx *Context, nq *model.Question) error {
 	return nil
 }
 
-func dequeueQuestion(ctx *Context, id string) error {
+func dequeueQuestion(ctx *Context, id string) (*model.Question, error) {
 	// get current queue from redis
 	currentQueue := model.QuestionQueue{}
 	err := ctx.SessionStore.GetQueue(&currentQueue)
 	if err != nil {
 		// `redis: nil` == empty redis, ignore
 		if err.Error() != "redis: nil" {
-			return err
+			return nil, err
 		}
 	}
 
-	// TODO: remove question from currentQueue
+	// remove question from currentQueue
+	// linear search
+	var removedQuestion *model.Question
+	for i, q := range currentQueue.Queue {
+		if q.ID == id {
+			removedQuestion = q
+			currentQueue.Queue = append(currentQueue.Queue[:i], currentQueue.Queue[i+1:]...)
+			break
+		}
+	}
 
 	// update redis
 	if err := ctx.SessionStore.SetQueue(currentQueue); err != nil {
-		return err
+		return nil, err
 	}
 
 	// create message and push to mq
-	ctx.Notifier.PublishMessage(&notifier.Message{
-		Type:    notifier.QuestionDelete,
-		Content: id,
-		UserID:  id,
-	})
+	if removedQuestion != nil {
+		ctx.Notifier.PublishMessage(&notifier.Message{
+			Type:    notifier.QuestionDelete,
+			Content: removedQuestion,
+			UserID:  removedQuestion.ID,
+		})
+		return removedQuestion, nil
+	}
 
-	return nil
+	// question not found
+	return nil, ErrQuestionNotFound
 }
 
 // HttpWriter takes necessary arguments to write back to client.

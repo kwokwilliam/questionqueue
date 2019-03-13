@@ -76,7 +76,7 @@ func main() {
 	// Question control - POSTing new questions and enqueue: POST
 	router.HandleFunc("/v1/student", ctx.PostQuestionHandler)
 	// Question control - DELETE dequeues an existing question: DELETE
-	router.HandleFunc("/v1/student/{id}", ctx.PostQuestionHandler)
+	router.HandleFunc("/v1/student/{id}", ctx.DeleteQuestionHandler)
 
 	log.Println("mongo:", mongoAddr)
 	log.Println("redis:",redisAddr)
