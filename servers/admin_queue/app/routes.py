@@ -147,10 +147,12 @@ def specific_class_handler(class_number):
 # DELETE a student and question from the queue
 @app.route('/v1/queue/<student_id>', methods=['DELETE'])
 def queue_delete_handler(student_id):
+    # taken out by Rico at 3:16pm 03/13/19
+
     # Check for authentication
-    auth = check_auth(request)
-    if auth != None:
-        return auth
+    # auth = check_auth(request)
+    # if auth != None:
+    #     return auth
 
     if request.method == 'DELETE':
         # Update resolution in mongo
