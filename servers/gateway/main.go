@@ -67,8 +67,8 @@ func main() {
 	rabbitAddr := getENVOrExit("RABBITADDR")
 	rabbitQueueName := getENVOrExit("RABBITQUEUENAME")
 	redisQueueName := getENVOrExit("REDISQUEUENAME")
-	teacherQueueAddrs := getENVOrExit("TEACHERQUEUEADDRS")
-	studentQueueAddrs := getENVOrExit("STUDENTQUEUEADDRS")
+	rwAddrs := getENVOrExit("RWADDRS")
+	ajAddrs := getENVOrExit("AJADDRS")
 
 	// Set up rabbit stuff
 	conn, err := amqp.Dial(rabbitAddr)
@@ -124,25 +124,27 @@ func main() {
 	}
 
 	// Create URLs for proxies
-	teacherQueueURLs := getURLs(teacherQueueAddrs)
-	studentQueueURLs := getURLs(studentQueueAddrs)
+	rwURLs := getURLs(rwAddrs)
+	ajURLs := getURLs(ajAddrs)
 
 	go ctx.Notifier.SendMessagesToWebsockets(queueMessages, ctx.SessAndQueueStore)
 
 	// set up proxies
-	teacherQueueProxy := &httputil.ReverseProxy{Director: CustomDirector(teacherQueueURLs, ctx)}
-	studentQueueProxy := &httputil.ReverseProxy{Director: CustomDirector(studentQueueURLs, ctx)}
+	rwProxy := &httputil.ReverseProxy{Director: CustomDirector(rwURLs, ctx)}
+	ajProxy := &httputil.ReverseProxy{Director: CustomDirector(ajURLs, ctx)}
 
 	// Create new mux for web server and set routes
 	mux := mux.NewRouter()
 	mux.HandleFunc("/v1/queue", ctx.WebSocketConnectionHandler)
-	mux.Handle("/v1/student", studentQueueProxy)
-	mux.Handle("/v1/class", teacherQueueProxy)
-	mux.Handle("/v1/class/{class_number}", teacherQueueProxy)
-	mux.Handle("/v1/teacher", teacherQueueProxy)
-	mux.Handle("/v1/teacher/{teacher_id}", teacherQueueProxy)
-	mux.Handle("/v1/teacher/login", teacherQueueProxy)
-	mux.Handle("/v1/queue/{student_id}", teacherQueueProxy)
+	// rw
+	mux.Handle("/v1/student", rwProxy)
+	mux.Handle("/v1/teacher", rwProxy)
+	mux.Handle("/v1/teacher/{teacher_id}", rwProxy)
+	mux.Handle("/v1/teacher/login", rwProxy)
+	//aj
+	mux.Handle("/v1/class", ajProxy)
+	mux.Handle("/v1/class/{class_number}", ajProxy)
+	mux.Handle("/v1/queue/{student_id}", ajProxy)
 
 	// Wrap mux with CORS handler
 	wrappedMux := handlers.NewCORS(mux)

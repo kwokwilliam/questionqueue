@@ -1,6 +1,10 @@
 package handlers
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+	"time"
+)
 
 const accessControlAllowOrigin = "Access-Control-Allow-Origin"
 const accessControlAllowMethods = "Access-Control-Allow-Methods"
@@ -36,7 +40,9 @@ func (c *CORS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+	start := time.Now()
 	c.handler.ServeHTTP(w, r)
+	log.Printf("%s %s %v", r.Method, r.URL.String(), time.Since(start))
 }
 
 // NewCORS constructs a new CORS middleware handler

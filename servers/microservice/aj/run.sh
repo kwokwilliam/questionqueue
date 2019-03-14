@@ -16,6 +16,7 @@ export ADMIN_PORT=8001
 
 # Run microservice
 docker run -d \
+    -p 8001:8001 \
     --name admin-micro \
     --network questionqueue \
     -e MONGO_URI=$MONGO_URI \

@@ -15,10 +15,15 @@ TEXT_TYPE = 'text/plain'
 
 MONGO_URI = os.getenv(
     "MONGO_URI", "mongodb://localhost:27017/question_queue")
+print(MONGO_URI)
 REDIS_HOST = os.getenv("REDIS_HOST", 'localhost')
+print(REDIS_HOST)
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+print(REDIS_HOST)
 QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
+print(QUEUE_NAME)
 RABBIT_HOST = os.environ.get('RABBIT_HOST', "localhost")
+print(RABBIT_HOST)
 
 # MongoDB configuration
 app.config["MONGO_URI"] = MONGO_URI
@@ -26,6 +31,7 @@ mongo = PyMongo(app)
 db = mongo.db
 
 classes = os.getenv("CLASS_COLLECTION", 'classes')
+# TODO: queue???
 queue = os.getenv("QUEUE_COLLECTION", 'queue')
 
 # Redis configuration
@@ -44,12 +50,21 @@ mq_channel.queue_declare(queue=QUEUE_NAME, durable=True)
 # GET a current class or POST a new class
 @app.route('/v1/class', methods=['GET', 'POST'])
 def class_handler():
+
+    # RW
+    print("inside class handler")
+
     if request.method == 'GET':
         all_classes = []
         try:
             all_classes = list(db[classes].find())
             for c in all_classes:
                 c['_id'] = str(c['_id'])
+
+            # added by RW for debugging
+            # not filling class info to the client
+            print("inspecting all classes")
+            print(all_classes)
         except pymongo.errors.PyMongoError:
             return handle_db_error()
 
