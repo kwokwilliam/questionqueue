@@ -30,7 +30,7 @@ app.config["MONGO_URI"] = MONGO_URI
 mongo = PyMongo(app)
 db = mongo.db
 
-classes = os.getenv("CLASS_COLLECTION", 'classes')
+classes = os.getenv("CLASS_COLLECTION", 'class')
 # TODO: queue???
 queue = os.getenv("QUEUE_COLLECTION", 'queue')
 
