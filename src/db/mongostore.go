@@ -19,6 +19,7 @@ const (
 	collClass    = "class"
 	collTeacher  = "teacher"
 	collQuestion = "question"
+	collError	 = "error"
 )
 
 var (
@@ -304,6 +305,14 @@ func scanTeacher(cursor *mongo.Cursor) []*model.Teacher {
 		}
 	}
 	return teacher
+}
+
+/*
+Error
+*/
+// InsertClass adds a given `model.class` to MongoDB.
+func (ms *MongoStore) InsertError(i interface{}) (*mongo.InsertOneResult, error) {
+	return insert(ms.GetCollection(dbName, collError), i)
 }
 
 /*
