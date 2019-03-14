@@ -15,27 +15,27 @@ export default function PersonInQueue({ person }) {
     const name = person.name;
     const classNumber = person['class'];
     const problemCategory = person.topic;
-    const problemDescription = person.problem;
+    const problemDescription = person.description;
     const location = {
         xPercentage: person["loc_x"],
         yPercentage: person["loc_y"]
     }
     const timestamp = person.created_at;
-    console.log("abc2");
+    console.log(person);
 
     if (!timestamp) { return null; }
-    let dateTimestamp = new Date(timestamp);
+    let dateTimestamp = timestamp;
     return <Card>
         <CardBody>
             <CardTitle>Name: {name}</CardTitle>
             <CardSubtitle>Course: {classNumber} - {problemCategory}</CardSubtitle>
-            <CardText>Submitted: {dateTimestamp.toLocaleDateString()} {dateTimestamp.toLocaleTimeString()}</CardText>
+            <CardText>Submitted: {dateTimestamp}</CardText>
             <CardText>Description: {problemDescription}</CardText>
             <StudentLocation locations={[location]} student={false} />
-            <Button disabled={loading} style={{ backgroundColor: "#005696" }} onClick={async () => {
+            <Button disabled={loading} style={{ backgroundColor: "#005696", marginTop: 30 }} onClick={async () => {
                 setLoading(true);
-                const { URL, Queue } = Endpoints;
-                const response = await fetch(URL + Queue + "/" + id, {
+                const { URL, Student } = Endpoints;
+                const response = await fetch(URL + Student + "/" + id, {
                     method: "DELETE"
                 });
                 if (response.status >= 300) {

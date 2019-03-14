@@ -18,6 +18,7 @@ export default function TutorQAdminWhoIsInQueue() {
 
         queueSocket.onopen = () => {
             console.log("Connected");
+            queueSocket.send("asdf");
         }
 
         queueSocket.onmessage = (event) => {

@@ -91,6 +91,7 @@ export default class TutorQStudent extends Component {
 
         this.queueSocket.onopen = () => {
             console.log("Connected");
+            this.queueSocket.send("asdf");
         }
 
         this.queueSocket.onmessage = (event) => {
@@ -221,7 +222,7 @@ export default class TutorQStudent extends Component {
                     name,
                     class: classNumber,
                     topic: problemCategory,
-                    problem: problemDescription,
+                    description: problemDescription,
                     "loc_x": location.xPercentage,
                     "loc_y": location.yPercentage,
                     // createdAt: Date.now()
