@@ -1,15 +1,17 @@
 package store
 
+import "time"
+
 // Question is used for individual questions
 type Question struct {
-	ID        string `json:"id,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Class     string `json:"class,omitempty"`
-	Topic     string `json:"topic,omitempty"`
-	Problem   string `json:"problem,omitempty"`
-	LocationX string `json:"loc.x,omitempty"`
-	LocationY string `json:"loc.y,omitempty"`
-	CreatedAt int64  `json:"createdAt,omitempty"`
+	ID        string    `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	Class     string    `json:"class,omitempty"`
+	Topic     string    `json:"topic,omitempty"`
+	Problem   string    `json:"description,omitempty"`
+	LocationX float64   `json:"loc_x,omitempty"`
+	LocationY float64   `json:"loc_y,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }
 
 // QuestionQueue will be unmarshalled from the redis store
