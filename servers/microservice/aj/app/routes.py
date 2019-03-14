@@ -114,7 +114,7 @@ def class_handler():
 
 
 # PATCH an existing class - overwrite topics
-@app.route('/v1/class/<int:class_number>', methods=['PATCH'])
+@app.route('/v1/class/<class_number>', methods=['PATCH'])
 def specific_class_handler(class_number):
     # Check for authentication
     auth = check_auth(request)
