@@ -38,10 +38,10 @@ export default function TutorQAdminWhoIsInQueue() {
         }
     }, []);
 
-    let queueAsArr = queue.map((d, i) => {
+    let queueAsArr = queue ? queue.map((d, i) => {
         console.log("abc");
         return <PersonInQueue key={"person" + i} person={d} />
-    })
+    }) : [];
 
     console.log(queueAsArr.length);
 
