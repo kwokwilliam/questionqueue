@@ -65,15 +65,18 @@ func (n *Notifier) SendMessagesToWebsockets(messages <-chan amqp.Delivery, sessA
 		if err != nil {
 			log.Printf("Error marshalling queue: %v", err)
 		}
-		log.Print("Marshalled queue")
 
 		// Notify all the users of a new queue state
 		for id, conn := range n.Connections {
 			if conn.IsTeacher {
+
+				log.Printf("Marshalled queue: %v", string(queueMarshalled))
+
 				if err := conn.Connection.WriteMessage(websocket.TextMessage, queueMarshalled); err != nil {
 					n.RemoveConnection(id)
 					conn.Connection.Close()
 				}
+
 			} else {
 				studentPositionedMarshalled, err := json.Marshal(studentPositions[id])
 				if err != nil {

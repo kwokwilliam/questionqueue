@@ -137,5 +137,6 @@ func (sid SessionID) getRedisKey() string {
 	// convert the SessionID to a string and add the prefix "sid:" to keep
 	// SessionID keys separate from other keys that might end up in this
 	// redis instance
-	return "sid:" + string(sid)
+	//return "sid:" + string(sid)
+	return string(sid)
 }
