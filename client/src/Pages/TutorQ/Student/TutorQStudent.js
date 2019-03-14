@@ -72,11 +72,11 @@ export default class TutorQStudent extends Component {
             console.log("abc")
             const fetchClasses = await fetch(URL + ClassControl);
             const classes = await fetchClasses.json()
-            const classTitles = classes.map(d => d.Code)
+            const classTitles = classes.map(d => (d.Code || d.class_number))
             const topics = {};
             classes.forEach(d => {
-                const classNumber = d.Code;
-                topics[classNumber] = d.Type;
+                const classNumber = d.Code || d.class_number;
+                topics[classNumber] = d.Type || d.topics;
             });
             this.setState({
                 classes: classTitles,
