@@ -23,9 +23,10 @@ func (s *RedisStore) GetCurrentQueue() (*QuestionQueue, error) {
 	returnQueue := &QuestionQueue{}
 	getQueue := s.Client.Get(s.redisQueueName)
 	if getQueue.Err() != nil {
-		if getQueue.Err().Error() != "redis: nil" {
-			return nil, getQueue.Err()
+		if getQueue.Err().Error() == "redis: nil" {
+			return returnQueue, nil
 		}
+		return nil, getQueue.Err()
 	}
 	if unmarshallErr := json.Unmarshal([]byte(getQueue.Val()), returnQueue); unmarshallErr != nil {
 		return nil, unmarshallErr
