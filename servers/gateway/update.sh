@@ -11,7 +11,7 @@ export TLSKEY=/etc/letsencrypt/live/apif.uwinfotutor.me/privkey.pem
 # Set addresses for microservices
 export REDISADDR="questionqueueredis:6379"
 export RABBITADDR="amqp://questionqueuerabbit:5672"
-export RABBITQUEUENAME="rabbitqueue"
+export RABBITQUEUENAME="queue"
 export REDISQUEUENAME="queue"
 export RWADDRS="http://rw:8000"
 export AJADDRS="http://admin-micro:8001"
