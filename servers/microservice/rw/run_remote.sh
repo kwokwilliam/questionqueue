@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-docker pull ricowang/questionqueue:latest
+docker pull ricowang/rw:latest
+
+docker rm -f rw
 
 docker run \
     -d \
@@ -11,6 +13,6 @@ docker run \
     -e MONGOADDR="mongodb://questionqueuemongo:27017" \
     -e REDISADDR="questionqueueredis:6379" \
     -e RABBITADDR="amqp://guest:guest@questionqueuerabbit:5672" \
-    ricowang/questionqueue:latest
+    ricowang/rw:latest
 
 docker ps -a
