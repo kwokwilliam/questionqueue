@@ -84,10 +84,10 @@ def class_handler():
         elif req_body.get("topics", "") == "" or not isinstance(req_body['topics'], list):
             return handle_missing_field("Class topics are required")
 
-        if not isinstance(req_body['class_number'], int):
-            resp = Response("Class number must be an integer",
-                            status=400, mimetype=TEXT_TYPE)
-            return resp
+        # if not isinstance(req_body['class_number'], int):
+        #     resp = Response("Class number must be an integer",
+        #                     status=400, mimetype=TEXT_TYPE)
+        #     return resp
 
         # Check if it already exists in the database
         class_query = {"class_number": req_body['class_number']}
@@ -200,6 +200,8 @@ def method_not_supported(error):
     return resp
 
 # Custom error handler for status 405 - method not supported
+
+
 @app.errorhandler(405)
 def method_not_supported(error):
     resp = Response("405 Method not supported", status=405)
