@@ -1,19 +1,17 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"questionqueue/src/handler"
-	"questionqueue/src/session"
+	"questionqueue/servers/gateway/handlers"
+	"questionqueue/servers/gateway/store"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/streadway/amqp"
@@ -26,7 +24,7 @@ import (
 type Director func(r *http.Request)
 
 // CustomDirector forwards to the microservice and passes it the current user.
-func CustomDirector(targets []*url.URL, ctx *handler.HandlerContext) Director {
+func CustomDirector(targets []*url.URL, ctx *handlers.HandlerContext) Director {
 	var counter int32
 	counter = 0
 	mutex := sync.Mutex{}
@@ -38,24 +36,8 @@ func CustomDirector(targets []*url.URL, ctx *handler.HandlerContext) Director {
 		atomic.AddInt32(&counter, 1)
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Del("X-User")
-		sessionState := &handler.SessionState{}
-		_, err := session.GetState(r, ctx.SigningKey, ctx.SessionStore, sessionState)
-
-		// If there is an error, we cannot deal with it here,
-		// so forward it to the API to deal with it. (Could probably
-		// deal with it here but don't know if I should pass the
-		// responsewriter)
-		if err != nil {
-			r.Header.Add("X-User", "{}")
-		} else {
-			user := sessionState.User
-			userJSON, err := json.Marshal(user)
-			if err != nil {
-				r.Header.Add("X-User", "{}")
-			} else {
-				r.Header.Add("X-User", string(userJSON))
-			}
-		}
+		identification := r.URL.Query().Get("identification")
+		r.Header.Add("X-User", `{"id": "`+identification+`"}`)
 		r.Host = targ.Host
 		r.URL.Host = targ.Host
 		r.URL.Scheme = targ.Scheme
@@ -81,14 +63,12 @@ func main() {
 	addr := os.Getenv("ADDR")
 	tlscert := getENVOrExit("TLSCERT")
 	tlskey := getENVOrExit("TLSKEY")
-	sessionKey := getENVOrExit("SESSIONKEY")
 	redisAddr := getENVOrExit("REDISADDR")
-	dsn := getENVOrExit("DSN")
-	accessKey := getENVOrExit("AWSACCESS")
-	secretKey := getENVOrExit("AWSSECRET")
-	messagesAddrs := getENVOrExit("MESSAGESADDR")
-	summaryAddrs := getENVOrExit("SUMMARYADDR")
 	rabbitAddr := getENVOrExit("RABBITADDR")
+	rabbitQueueName := getENVOrExit("RABBITQUEUENAME")
+	redisQueueName := getENVOrExit("REDISQUEUENAME")
+	teacherQueueAddrs := getENVOrExit("TEACHERQUEUEADDRS")
+	studentQueueAddrs := getENVOrExit("STUDENTQUEUEADDRS")
 
 	// Set up rabbit stuff
 	conn, err := amqp.Dial(rabbitAddr)
@@ -102,7 +82,7 @@ func main() {
 	}
 	defer ch.Close()
 	q, err := ch.QueueDeclare(
-		"slackQueue",
+		rabbitQueueName,
 		true,
 		false,
 		false,
@@ -112,7 +92,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when declaring a queue: %s", err)
 	}
-	slackQueueMessages, err := ch.Consume(
+	queueMessages, err := ch.Consume(
 		q.Name,
 		"",
 		false,
@@ -125,56 +105,47 @@ func main() {
 		log.Fatalf("Error when setting up consumer: %s", err)
 	}
 
-	// Create URLs for proxies
-	messagesURLs := getURLs(messagesAddrs)
-	summaryURLs := getURLs(summaryAddrs)
-
 	// Create new redis and mysql store
 	client := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
-	redisStore := sessions.NewRedisStore(client, time.Hour)
-	mysqlstore, err := users.NewMySQLStore(dsn)
+	redisStore := store.NewRedisStore(client, redisQueueName)
 	if err != nil {
-		log.Fatal("Unable to connect to mysql database")
+		log.Fatal("Unable to connect to redis database")
 	}
-	ctx, err := handler.NewHandlerContext(sessionKey, redisStore, mysqlstore, accessKey, secretKey)
+	ctx, err := handlers.NewHandlerContext(redisStore)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}
 
-	if err = ctx.InitiateTrie(); err != nil {
-		log.Fatal("Failed to initiate trie")
-	}
 	// Set port
 	if len(addr) == 0 {
 		addr = ":443"
 	}
 
-	go ctx.Notifier.SendMessagesToWebsockets(slackQueueMessages)
+	// Create URLs for proxies
+	teacherQueueURLs := getURLs(teacherQueueAddrs)
+	studentQueueURLs := getURLs(studentQueueAddrs)
+
+	go ctx.Notifier.SendMessagesToWebsockets(queueMessages, ctx.SessAndQueueStore)
 
 	// set up proxies
-	messagesProxy := &httputil.ReverseProxy{Director: CustomDirector(messagesURLs, ctx)}
-	summaryProxy := &httputil.ReverseProxy{Director: CustomDirector(summaryURLs, ctx)}
+	teacherQueueProxy := &httputil.ReverseProxy{Director: CustomDirector(teacherQueueURLs, ctx)}
+	studentQueueProxy := &httputil.ReverseProxy{Director: CustomDirector(studentQueueURLs, ctx)}
 
 	// Create new mux for web server and set routes
 	mux := mux.NewRouter()
-	mux.HandleFunc("/v1/users", ctx.UsersHandler)
-	mux.HandleFunc("/v1/users/{uid}", ctx.SpecificUsersHandler)
-	mux.HandleFunc("/v1/users/{uid}/avatar", ctx.ProfilePhotoHandler)
-	mux.HandleFunc("/v1/sessions", ctx.SessionsHandler)
-	mux.HandleFunc("/v1/sessions/{uid}", ctx.SpecificSessionHandler)
-	mux.HandleFunc("/v1/resetcodes", ctx.ResetCodesHandler)
-	mux.HandleFunc("/v1/passwords/{email}", ctx.ResetPassword)
-	mux.HandleFunc("/v1/ws", ctx.WebSocketConnectionHandler)
-	mux.Handle("/v1/channels", messagesProxy)
-	mux.Handle("/v1/channels/{channelID}", messagesProxy)
-	mux.Handle("/v1/channels/{channelID}/members", messagesProxy)
-	mux.Handle("/v1/messages/{messageID}", messagesProxy)
-	mux.Handle("/v1/summary", summaryProxy)
+	mux.HandleFunc("/v1/queue", ctx.WebSocketConnectionHandler)
+	mux.Handle("/v1/student", studentQueueProxy)
+	mux.Handle("/v1/class", teacherQueueProxy)
+	mux.Handle("/v1/class/{class_number}", teacherQueueProxy)
+	mux.Handle("/v1/teacher", teacherQueueProxy)
+	mux.Handle("/v1/teacher/{teacher_id}", teacherQueueProxy)
+	mux.Handle("/v1/teacher/login", teacherQueueProxy)
+	mux.Handle("/v1/queue/{student_id}", teacherQueueProxy)
 
 	// Wrap mux with CORS handler
-	wrappedMux := handler.NewCORS(mux)
+	wrappedMux := handlers.NewCORS(mux)
 
 	// Start web server, log errors
 	log.Printf("server is listening at %s...", addr)
