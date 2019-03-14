@@ -97,8 +97,8 @@ def class_handler():
 
         # Insert into database
         new_class = {
-            "class_number": req_body['class_number'],
-            "topics": req_body['topics']
+            "class_number": req_body['Code'],
+            "topics": req_body['Type']
         }
 
         try:
