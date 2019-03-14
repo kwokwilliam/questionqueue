@@ -16,7 +16,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
 
 ### Updated Infrastucture Diagram:
 
-![Original Question Queue Architecture Diagram](_readme_assets/diagram.png)
+![Original Question Queue Architecture Diagram](_readme_assets/updated.png)
 
 <!-- https://www.lucidchart.com/invitations/accept/dbb3c7e4-ab54-4f04-a98f-eb88195d1be8 -->
 
