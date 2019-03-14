@@ -41,8 +41,8 @@ export default class TutorQStudent extends Component {
         this.setState({ removeButtonLoading: true });
 
         // Call remove user from queue endpoint
-        const { URL, Queue } = Endpoints;
-        const response = await fetch(URL + Queue + "/" + this.id, {
+        const { URL, Student } = Endpoints;
+        const response = await fetch(URL + Student + "/" + this.id, {
             method: "DELETE"
         });
         if (response.status >= 300) {
@@ -269,7 +269,7 @@ export default class TutorQStudent extends Component {
                         </p>
                         <Button style={{ backgroundColor: '#005696' }}
                             onClick={this.removeMeFromQueue}
-                            disabled={this.state.removeButtonLoading}
+                        // disabled={this.state.removeButtonLoading}
                         >Remove me from queue</Button>
                     </div>
                 </div>

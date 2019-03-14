@@ -91,7 +91,7 @@ export default class TutorQAdmin extends Component {
             return;
         }
         const user = await response.json()
-        this.setUser(user);
+        this.setUser(user.state);
     }
 
     setAuthToken = (authToken) => {
@@ -148,6 +148,9 @@ export default class TutorQAdmin extends Component {
             loginPassword: ""
         });
     }
+    setError = (e) => {
+        this.setState({ error: e })
+    }
 
     signUp = async () => {
         const { URL, Teacher } = Endpoints;
@@ -156,8 +159,8 @@ export default class TutorQAdmin extends Component {
             email: signUpEmail,
             password: signUpPassword,
             password_conf: signUpPasswordConf,
-            firstname: signUpFirstName,
-            lastname: signUpLastName
+            first_name: signUpFirstName,
+            last_name: signUpLastName
         }
         const response = await fetch(URL + Teacher, {
             method: "POST",
@@ -263,7 +266,7 @@ export default class TutorQAdmin extends Component {
             {user && admin && <>
                 <Route exact path={"/tutorqadmin"} render={() => <TutorQAdminMain adminButtons={this.adminButtons} signOut={this.signOut} />} />
                 {/* <Route path={"/tutorqadmin/adminqueue"} render={() => <TutorQAdminAdminQueue uid={user.id} identification={}/>} /> */}
-                <Route path={"/tutorqadmin/whosinqueue"} render={() => <TutorQAdminWhoIsInQueue uid={user.id} />} />
+                <Route path={"/tutorqadmin/whosinqueue"} render={() => <TutorQAdminWhoIsInQueue id={this.id} uid={this.state.authToken} />} />
                 {/* <Route path={"/tutorqadmin/seatingdistribution"} render={() => <TutorQAdminSeatingDistribution />} /> */}
             </>}
 

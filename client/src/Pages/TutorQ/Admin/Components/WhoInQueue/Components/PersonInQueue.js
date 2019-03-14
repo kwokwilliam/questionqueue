@@ -21,6 +21,7 @@ export default function PersonInQueue({ person }) {
         yPercentage: person["loc_y"]
     }
     const timestamp = person.created_at;
+    console.log("abc2");
 
     if (!timestamp) { return null; }
     let dateTimestamp = new Date(timestamp);
