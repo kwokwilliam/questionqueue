@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# create docker network if not already existing
-docker network create questionqueue
-
 # run rabbit
 docker run -d \
 --name questionqueuerabbit \
