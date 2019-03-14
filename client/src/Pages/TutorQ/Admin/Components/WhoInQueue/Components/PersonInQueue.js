@@ -17,10 +17,10 @@ export default function PersonInQueue({ person }) {
     const problemCategory = person.topic;
     const problemDescription = person.problem;
     const location = {
-        xPercentage: person["loc.x"],
-        yPercentage: person["loc.y"]
+        xPercentage: person["loc_x"],
+        yPercentage: person["loc_y"]
     }
-    const timestamp = person.createdAt;
+    const timestamp = person.created_at;
 
     if (!timestamp) { return null; }
     let dateTimestamp = new Date(timestamp);

@@ -55,27 +55,28 @@ export default class TutorQStudent extends Component {
 
     componentDidMount = async () => {
         // TEST CODE FOR NOW
-        this.setState({
-            classes: ["201", "330", "340"],
-            topics: {
-                "201": ['Setup', 'Markdown', 'Git/web servers', 'R', 'dplyr', 'Web APIs', 'R Markdown', 'ggplot2', 'R Shiny', 'Other'],
-                "330": ['ERDs and MetaData', 'Create table', 'Constraints', 'Inserting data', 'Views, Functions, Stored procedures', 'Permissions', 'Testing', 'Other'],
-                "340": ['Setup', 'HTML', 'CSS Fundamentals', 'CSS Selectors', 'CSS Layouting', 'Responsive CSS', 'CSS Frameworks', 'Basic JavaScript', 'jQuery', 'DOM', 'AJAX/Fetch', 'React', 'Routing', 'Firebase', 'Testing', 'Other']
-            }
-        });
+        // this.setState({
+        //     classes: ["201", "330", "340"],
+        //     topics: {
+        //         "201": ['Setup', 'Markdown', 'Git/web servers', 'R', 'dplyr', 'Web APIs', 'R Markdown', 'ggplot2', 'R Shiny', 'Other'],
+        //         "330": ['ERDs and MetaData', 'Create table', 'Constraints', 'Inserting data', 'Views, Functions, Stored procedures', 'Permissions', 'Testing', 'Other'],
+        //         "340": ['Setup', 'HTML', 'CSS Fundamentals', 'CSS Selectors', 'CSS Layouting', 'Responsive CSS', 'CSS Frameworks', 'Basic JavaScript', 'jQuery', 'DOM', 'AJAX/Fetch', 'React', 'Routing', 'Firebase', 'Testing', 'Other']
+        //     }
+        // });
 
 
         // ACTUAL CODE
         // Get all the classes and topics and set that.
         const { URL, ClassControl, QueueWebSocket } = Endpoints;
         try {
+            console.log("abc")
             const fetchClasses = await fetch(URL + ClassControl);
             const classes = await fetchClasses.json()
-            const classTitles = classes.map(d => d.class_number)
+            const classTitles = classes.map(d => d.Code)
             const topics = {};
             classes.forEach(d => {
-                const classNumber = d.class_number;
-                topics[classNumber] = d.question_type;
+                const classNumber = d.Code;
+                topics[classNumber] = d.Type;
             });
             this.setState({
                 classes: classTitles,
@@ -83,6 +84,7 @@ export default class TutorQStudent extends Component {
             });
         } catch (e) {
             // this.setError(e)
+            console.log(e)
         }
 
         this.queueSocket = new WebSocket(`${QueueWebSocket}?identification=${this.id}`);
@@ -92,6 +94,7 @@ export default class TutorQStudent extends Component {
         }
 
         this.queueSocket.onmessage = (event) => {
+            console.log(event);
             const { data } = event;
             const parsedData = JSON.parse(data);
             if (parsedData) {
@@ -219,8 +222,8 @@ export default class TutorQStudent extends Component {
                     class: classNumber,
                     topic: problemCategory,
                     problem: problemDescription,
-                    "loc.x": location.xPercentage,
-                    "loc.y": location.yPercentage,
+                    "loc_x": location.xPercentage,
+                    "loc_y": location.yPercentage,
                     // createdAt: Date.now()
                 }),
                 headers: new Headers({
