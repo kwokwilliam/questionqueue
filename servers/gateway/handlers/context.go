@@ -3,8 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"questionqueue/servers/gateway/store"
+
+	"github.com/streadway/amqp"
 
 	"github.com/gorilla/websocket"
 )
@@ -24,12 +27,13 @@ var upgrader = websocket.Upgrader{
 type HandlerContext struct {
 	SessAndQueueStore store.Store
 	Notifier          *Notifier
+	Channel           *amqp.Channel
 }
 
 // NewHandlerContext creates a new handler context
-func NewHandlerContext(SessAndQueueStore store.Store) (*HandlerContext, error) {
+func NewHandlerContext(SessAndQueueStore store.Store, ch *amqp.Channel) (*HandlerContext, error) {
 	if SessAndQueueStore != nil {
-		return &HandlerContext{SessAndQueueStore, &Notifier{}}, nil
+		return &HandlerContext{SessAndQueueStore, &Notifier{}, ch}, nil
 	}
 	return nil, errFailNewContext
 }
@@ -65,6 +69,19 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 				messageType, p, err := conn.ReadMessage()
 				if messageType == websocket.TextMessage || messageType == websocket.BinaryMessage {
 					fmt.Print("Client says", p)
+					err := ctx.Channel.Publish(
+						"",
+						"queue",
+						false,
+						false,
+						amqp.Publishing{
+							ContentType: "text/plain",
+							Body:        []byte("a"),
+						})
+					if err != nil {
+						log.Printf("Failed to publish ws")
+					}
+
 				} else if messageType == websocket.CloseMessage || err != nil {
 					break
 				}

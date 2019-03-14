@@ -113,7 +113,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to connect to redis database")
 	}
-	ctx, err := handlers.NewHandlerContext(redisStore)
+	ctx, err := handlers.NewHandlerContext(redisStore, ch)
 	if err != nil {
 		log.Fatal("Unable to create new handler context")
 	}
