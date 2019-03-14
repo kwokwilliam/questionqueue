@@ -3,6 +3,7 @@
 docker pull ricowang/questionqueue:latest
 
 docker run \
+    -d \
     --network questionqueue \
     --name rw \
     -p 8000:8000 \
@@ -11,3 +12,5 @@ docker run \
     -e REDISADDR="questionqueueredis:6379" \
     -e RABBITADDR="amqp://guest:guest@questionqueuerabbit:5672" \
     ricowang/questionqueue:latest
+
+docker ps -a

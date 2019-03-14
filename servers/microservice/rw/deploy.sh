@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-docker rm -f questionqueue
-docker rmi ricowang/questionqueue
+./clean.sh
 
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
 docker build -t ricowang/questionqueue:latest .
