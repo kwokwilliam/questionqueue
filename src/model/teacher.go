@@ -14,7 +14,6 @@ type Teacher struct {
 	PasswordHash string             `json:"password_hash,omitempty" bson:"passwordhash"`
 	FirstName    string             `json:"first_name"              bson:"firstname"`
 	LastName     string             `json:"last_name"               bson:"lastname"`
-	Admin		 bool				`json:"admin"                   bson:"admin"`
 }
 
 type TeacherUpdate struct {
