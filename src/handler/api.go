@@ -289,6 +289,8 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		nq.CreatedAt = time.Now()
+
 		if err := enqueueQuestion(ctx, nq); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -300,7 +302,6 @@ func (ctx *Context) PostQuestionHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		b, _ := json.Marshal(nq)
-
 		httpWriter(http.StatusCreated, b, MimeJson, w)
 		return
 

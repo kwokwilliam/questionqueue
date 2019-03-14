@@ -12,7 +12,7 @@ docker run \
     -e ADDR=":8000" \
     -e MONGOADDR="mongodb://questionqueuemongo:27017" \
     -e REDISADDR="questionqueueredis:6379" \
-    -e RABBITADDR="amqp://guest:guest@questionqueuerabbit:5672" \
+    -e RABBITADDR="amqp://questionqueuerabbit:5672" \
     ricowang/rw:latest
 
 docker ps -a

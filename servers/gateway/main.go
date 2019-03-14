@@ -141,10 +141,10 @@ func main() {
 	mux.Handle("/v1/teacher", rwProxy)
 	mux.Handle("/v1/teacher/{teacher_id}", rwProxy)
 	mux.Handle("/v1/teacher/login", rwProxy)
+	mux.Handle("/v1/student/{student_id}", rwProxy)
 	//aj
 	mux.Handle("/v1/class", ajProxy)
 	mux.Handle("/v1/class/{class_number}", ajProxy)
-	mux.Handle("/v1/queue/{student_id}", ajProxy)
 
 	// Wrap mux with CORS handler
 	wrappedMux := handlers.NewCORS(mux)

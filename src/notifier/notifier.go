@@ -56,13 +56,16 @@ func (n *Notifier) PublishMessage(message *Message) {
 	defer n.lock.Unlock()
 
 	m, _ := json.Marshal(message)
+
+	log.Printf("MQ got message: %v", string(m))
+
 	err := n.channel.Publish(
 		"",
 		n.queue.Name,
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: "application/json",
+			ContentType: "text/plain",
 			Body:        m,
 		})
 

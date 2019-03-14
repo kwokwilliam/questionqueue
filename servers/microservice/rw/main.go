@@ -47,7 +47,8 @@ func main() {
 		log.Fatalf("cannot get channel from RabbitMQ: %v", err)
 	}
 
-	q, err := ch.QueueDeclare(rabbitAddr, true, false, false, false, nil)
+	queueName := "queue"
+	q, err := ch.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
 		log.Fatalf("cannot declare queue: %v", err)
 	}
@@ -55,7 +56,7 @@ func main() {
 	n := notifier.NewNotifier(ch, q)
 
 	ctx := handler.Context{
-		Key:          sessionKey, 		// TODO: get a key
+		Key:          sessionKey,
 		SessionStore: redis,
 		MongoStore:   ms,
 		Trie:         nil,
