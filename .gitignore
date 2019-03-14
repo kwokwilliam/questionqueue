@@ -4,8 +4,18 @@
 *.dll
 *.so
 *.dylib
+
+# Mac
 .DS_Store
+
+# client
+client/node_modules
+
+# Python
+__pycache__
 venv/
+
+*.vscode
 
 # Test binary, build with `go test -c`
 *.test
@@ -82,6 +92,3 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
-
-# client
-client/node_modules
