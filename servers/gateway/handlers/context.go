@@ -48,7 +48,7 @@ func (ctx *HandlerContext) WebSocketConnectionHandler(w http.ResponseWriter, r *
 
 	// check if is teacher
 	isTeacher := false
-	if authHeader := r.URL.Query().Get("authentication"); authHeader != "" {
+	if authHeader := r.URL.Query().Get("auth"); authHeader != "" {
 		isTeacher = ctx.SessAndQueueStore.IsFoundSessionID(authHeader)
 	}
 
