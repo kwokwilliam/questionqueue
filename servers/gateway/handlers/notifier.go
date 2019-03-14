@@ -51,14 +51,12 @@ func (n *Notifier) RemoveConnection(id string) {
 func (n *Notifier) SendMessagesToWebsockets(messages <-chan amqp.Delivery, sessAndQueueStore store.Store) {
 	for message := range messages {
 		n.lock.Lock()
-		log.Print("sending message")
 		// For any received message, we immediately know it is because the queue has been updated.
 		// First,we grab the current queue from redis
 		currQueue, err := sessAndQueueStore.GetCurrentQueue()
 		if err != nil {
 			log.Printf("Error getting the current queue: %v", err)
 		}
-		log.Print("Got current queue")
 		// get studentized queue and marshal both regular queue and student queue positions
 		studentPositions := currQueue.GetStudentPositions()
 		queueMarshalled, err := json.Marshal(currQueue)
@@ -69,9 +67,6 @@ func (n *Notifier) SendMessagesToWebsockets(messages <-chan amqp.Delivery, sessA
 		// Notify all the users of a new queue state
 		for id, conn := range n.Connections {
 			if conn.IsTeacher {
-
-				log.Printf("Marshalled queue: %v", string(queueMarshalled))
-
 				if err := conn.Connection.WriteMessage(websocket.TextMessage, queueMarshalled); err != nil {
 					n.RemoveConnection(id)
 					conn.Connection.Close()
