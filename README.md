@@ -94,7 +94,7 @@ The system will heavily rely on isolated *Docker container microservices*. Users
   * `500`: Internal server error.
 
 #### Gateway Endpoints
-`/v1/queue`: websocket connection to notify users and teachers of the current queue. Student provides student id as query parameter `studentid`.
+`/v1/queue`: websocket connection to notify users and teachers of the current queue. Student provides student id as query parameter `identification`. Teachers provide their session identification as a query parameter `auth` (without the `Bearer `).
 * If the user connected with an auth token, we can assume the user is a teacher of a class, so when we emit the entire queue list to it and do so for subsequent users entering or leaving.
 * If no auth token is provided, we only give them a position object in this format `{ "position": number }` where the `number` is their position in line.
 
@@ -144,8 +144,8 @@ The client will send this to the server to create a new account:
   "class": "class_number",
   "topic": "topic_of_question",
   "problem": "question",
-  "loc.x": "x-coord_of_location_in_lab",
-  "loc.y": "y-coord_of_location_in_lab",
+  "loc_x": "x-coord_of_location_in_lab",
+  "loc_y": "y-coord_of_location_in_lab",
   "createdAt": "time_created"
 }
 ```
@@ -187,8 +187,8 @@ The main design decision here is that we would like to obfuscate the contents of
         "class": "class_number",
         "topic": "topic_of_question",
         "problem": "question",
-        "loc.x": "x-coord_of_location_in_lab",
-        "loc.y": "y-coord_of_location_in_lab",
+        "loc_x": "x-coord_of_location_in_lab",
+        "loc_y": "y-coord_of_location_in_lab",
         "createdAt": "time_created"
       }
   ]
