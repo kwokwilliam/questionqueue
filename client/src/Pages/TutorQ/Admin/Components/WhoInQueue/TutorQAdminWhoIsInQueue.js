@@ -17,15 +17,12 @@ export default function TutorQAdminWhoIsInQueue() {
         const queueSocket = new WebSocket(`${QueueWebSocket}?identification=${id}&auth=${uid}`)
 
         queueSocket.onopen = () => {
-            console.log("Connected");
             queueSocket.send("asdf");
         }
 
         queueSocket.onmessage = (event) => {
             const { data } = event;
-            console.log(event);
             const parsedData = JSON.parse(data);
-            console.log(parsedData);
             if (parsedData) {
                 setQueue(parsedData.queue);
             } else {
@@ -39,11 +36,9 @@ export default function TutorQAdminWhoIsInQueue() {
     }, []);
 
     let queueAsArr = queue ? queue.map((d, i) => {
-        console.log("abc");
         return <PersonInQueue key={"person" + i} person={d} />
     }) : [];
 
-    console.log(queueAsArr.length);
 
     return <>
         <BackToHubButton />

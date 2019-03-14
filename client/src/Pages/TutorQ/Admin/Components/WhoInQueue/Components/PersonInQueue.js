@@ -26,13 +26,15 @@ export default function PersonInQueue({ person }) {
     if (!timestamp) { return null; }
     let dateTimestamp = timestamp;
     return <Card>
-        <CardBody>
+        <div>
+            <StudentLocation locations={[location]} student={false} />
+        </div>
+        <CardBody style={{ textAlign: "left" }}>
             <CardTitle>Name: {name}</CardTitle>
             <CardSubtitle>Course: {classNumber} - {problemCategory}</CardSubtitle>
             <CardText>Submitted: {dateTimestamp}</CardText>
             <CardText>Description: {problemDescription}</CardText>
-            <StudentLocation locations={[location]} student={false} />
-            <Button disabled={loading} style={{ backgroundColor: "#005696", marginTop: 30 }} onClick={async () => {
+            <Button disabled={loading} style={{ backgroundColor: "#005696" }} onClick={async () => {
                 setLoading(true);
                 const { URL, Student } = Endpoints;
                 const response = await fetch(URL + Student + "/" + id, {

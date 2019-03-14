@@ -90,12 +90,10 @@ export default class TutorQStudent extends Component {
         this.queueSocket = new WebSocket(`${QueueWebSocket}?identification=${this.id}`);
 
         this.queueSocket.onopen = () => {
-            console.log("Connected");
             this.queueSocket.send("asdf");
         }
 
         this.queueSocket.onmessage = (event) => {
-            console.log(event);
             const { data } = event;
             const parsedData = JSON.parse(data);
             if (parsedData) {
@@ -209,7 +207,6 @@ export default class TutorQStudent extends Component {
 
     sendData = async () => {
         if (this.checkValidityBeforeSendingRequest()) {
-            console.log("abc")
             let { name, classNumber, problemCategory, problemDescription, location } = this.state;
             cookies.set("tutorqname", name);
             cookies.set("tutorqclassnumber", classNumber.toString());
