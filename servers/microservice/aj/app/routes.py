@@ -15,15 +15,10 @@ TEXT_TYPE = 'text/plain'
 
 MONGO_URI = os.getenv(
     "MONGO_URI", "mongodb://localhost:27017/question_queue")
-print(MONGO_URI)
 REDIS_HOST = os.getenv("REDIS_HOST", 'localhost')
-print(REDIS_HOST)
 REDIS_PORT = os.getenv("REDIS_PORT", 6379)
-print(REDIS_HOST)
 QUEUE_NAME = os.getenv("QUEUE_NAME", 'queue')
-print(QUEUE_NAME)
 RABBIT_HOST = os.environ.get('RABBIT_HOST', "localhost")
-print(RABBIT_HOST)
 
 # MongoDB configuration
 app.config["MONGO_URI"] = MONGO_URI
@@ -31,8 +26,7 @@ mongo = PyMongo(app)
 db = mongo.db
 
 classes = os.getenv("CLASS_COLLECTION", 'class')
-# TODO: queue???
-queue = os.getenv("QUEUE_COLLECTION", 'queue')
+question = os.getenv("QUESTION_COLLECTION", 'question')
 
 # Redis configuration
 r = redis.StrictRedis(
@@ -253,11 +247,8 @@ def check_for_object(query, obj_type):
     try:
         if obj_type == 'class':
             curr_object = db[classes].find_one(query)
-            # print(curr_object)
         elif obj_type == 'question':
-            print('line 253: question query')
-            curr_object = db[queue].find_one(query)
-            print(curr_object)
+            curr_object = db[question].find_one(query)
     except pymongo.errors.PyMongoError:
         return handle_db_error()
 
