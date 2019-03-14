@@ -12,8 +12,8 @@ self.__precacheManifest = [
     "url": "/questionqueue/static/js/runtime~main.fc07ffa5.js"
   },
   {
-    "revision": "f87b9b4f34bdbf75b5c0cf3a5a137508",
-    "url": "/questionqueue/static/media/Quicksand-Regular.f87b9b4f.ttf"
+    "revision": "0c04462696ac0fd3e85e75415b483fdb",
+    "url": "/questionqueue/static/media/Quicksand-Bold.0c044626.ttf"
   },
   {
     "revision": "fdda326a74de8bd3e62e",
@@ -36,8 +36,8 @@ self.__precacheManifest = [
     "url": "/questionqueue/static/media/Quicksand-Medium.0c642332.ttf"
   },
   {
-    "revision": "0c04462696ac0fd3e85e75415b483fdb",
-    "url": "/questionqueue/static/media/Quicksand-Bold.0c044626.ttf"
+    "revision": "f87b9b4f34bdbf75b5c0cf3a5a137508",
+    "url": "/questionqueue/static/media/Quicksand-Regular.f87b9b4f.ttf"
   },
   {
     "revision": "c5f954788f341b22e1974433bb972ac1",
