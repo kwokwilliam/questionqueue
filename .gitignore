@@ -4,8 +4,18 @@
 *.dll
 *.so
 *.dylib
+
+# Mac
 .DS_Store
+
+# client
+client/node_modules
+
+# Python
+__pycache__
 venv/
+
+*.vscode
 
 # Test binary, build with `go test -c`
 *.test
@@ -23,6 +33,8 @@ venv/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/**
+.idea/*
 
 # Generated files
 .idea/**/contentModel.xml
